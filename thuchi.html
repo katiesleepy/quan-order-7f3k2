@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thu Chi — Quán Hủ Tiếu</title>
+<style>
+  :root{
+    --cream:#FFF8EE;
+    --paper:#FFFFFF;
+    --ink:#3A2618;
+    --ink-soft:#6B4F3B;
+    --terracotta:#C4502A;
+    --terracotta-dark:#9C3D1F;
+    --gold:#D99A3D;
+    --line:#E8D9C4;
+    --green:#2E7D32;
+    --red:#C62828;
+    --bg:#EDE2CF;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family:'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  header.topbar{
+    background:var(--terracotta);
+    color:#fff;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky; top:0; z-index:20;
+    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+  }
+  header.topbar .title{ font-size:17px; font-weight:800; letter-spacing:0.5px; display:flex; align-items:center; gap:8px;}
+  header.topbar a.homelink{
+    background:rgba(255,255,255,0.18); border:none; color:#fff; text-decoration:none;
+    padding:8px 12px; border-radius:8px; font-size:13px; font-weight:600;
+  }
+  main{ flex:1; padding:14px 14px 90px; max-width:640px; margin:0 auto; width:100%; }
+  nav.bottomnav{
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--paper); border-top:1px solid var(--line);
+    display:flex; z-index:20;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.08);
+  }
+  nav.bottomnav button{
+    flex:1; background:none; border:none; padding:10px 4px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    color:var(--ink-soft); font-size:11.5px; font-weight:600;
+  }
+  nav.bottomnav button .ic{ font-size:20px; }
+  nav.bottomnav button.active{ color:var(--terracotta-dark); }
+
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  .section-title{
+    font-size:13px; letter-spacing:1px; text-transform:uppercase; font-weight:800;
+    color:var(--terracotta-dark); margin:18px 0 8px; display:flex; align-items:center; gap:6px;
+  }
+  .section-title:first-child{ margin-top:0; }
+  .banner{
+    background:#FCEFD0; border:1px solid var(--gold); border-radius:10px;
+    padding:10px 12px; font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;
+  }
+  .banner a{ color:var(--terracotta-dark); font-weight:700; }
+
+  .toggle-row{ display:flex; gap:10px; margin-bottom:12px; }
+  .toggle-row button{
+    flex:1; padding:11px; border-radius:10px; border:2px solid var(--line); background:var(--paper);
+    font-weight:700; font-size:13.5px; color:var(--ink-soft);
+  }
+  .toggle-row button.sel-thu{ border-color:var(--green); color:var(--green); background:#EAF6EA; }
+  .toggle-row button.sel-chi{ border-color:var(--red); color:var(--red); background:#FBEAEA; }
+  .toggle-row button.sel{ border-color:var(--terracotta); color:var(--terracotta-dark); background:#FDEDE3; }
+
+  .field{ margin-bottom:12px; }
+  .field label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:4px; }
+  .field input, .field select, .field textarea{
+    width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:14px;
+    background:var(--paper); color:var(--ink); font-family:inherit;
+  }
+  .field textarea{ resize:vertical; min-height:90px; }
+
+  .btn{
+    display:block; width:100%; padding:13px; border:none; border-radius:10px;
+    font-size:15px; font-weight:800; letter-spacing:0.3px; background:var(--terracotta); color:#fff;
+    margin-top:6px;
+  }
+  .btn.secondary{ background:var(--paper); color:var(--terracotta-dark); border:2px solid var(--terracotta); }
+  .btn.ghost{ background:none; color:var(--ink-soft); border:1px solid var(--line); }
+  .btn.small{ padding:8px 10px; font-size:12.5px; width:auto; }
+  .btn:disabled{ opacity:0.45; }
+
+  .card{
+    background:var(--paper); border:1px solid var(--line); border-radius:12px;
+    padding:14px; margin-bottom:14px;
+  }
+
+  .stat-row{ display:flex; gap:10px; margin-bottom:14px; }
+  .stat-box{
+    flex:1; background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    padding:12px 8px; text-align:center;
+  }
+  .stat-box .v{ font-size:16px; font-weight:800; color:var(--terracotta-dark); }
+  .stat-box .v.pos{ color:var(--green); }
+  .stat-box .v.neg{ color:var(--red); }
+  .stat-box .l{ font-size:10.5px; color:var(--ink-soft); margin-top:2px; }
+
+  .filter-row{ display:flex; gap:8px; margin-bottom:12px; overflow-x:auto; }
+  .filter-row button{
+    flex:0 0 auto; padding:8px 12px; border-radius:999px; border:1px solid var(--line);
+    background:var(--paper); font-weight:700; font-size:12px; color:var(--ink-soft); white-space:nowrap;
+  }
+  .filter-row button.active{ background:var(--terracotta); color:#fff; border-color:var(--terracotta); }
+
+  .entry-day-group{ margin-bottom:14px; }
+  .entry-day-head{
+    font-size:12px; font-weight:800; color:var(--ink-soft); padding:4px 2px;
+    display:flex; justify-content:space-between; border-bottom:1px solid var(--line); margin-bottom:6px;
+  }
+  .entry-row{
+    display:flex; align-items:center; gap:8px; padding:8px 4px; border-bottom:1px dashed var(--line);
+  }
+  .entry-row:last-child{ border-bottom:none; }
+  .entry-row .e-main{ flex:1; min-width:0; }
+  .entry-row .e-cat{ font-size:13px; font-weight:700; }
+  .entry-row .e-desc{ font-size:11.5px; color:var(--ink-soft); }
+  .entry-row .e-note{ font-size:11px; color:var(--ink-soft); font-style:italic; }
+  .entry-row .e-amt{ font-size:14px; font-weight:800; white-space:nowrap; }
+  .entry-row .e-amt.thu{ color:var(--green); }
+  .entry-row .e-amt.chi{ color:var(--red); }
+  .entry-row .e-del{ color:var(--red); font-weight:800; font-size:16px; padding:2px 6px; background:none; border:none; }
+  .entry-row .e-src{ font-size:9.5px; color:var(--ink-soft); background:var(--cream); border-radius:6px; padding:1px 5px; margin-left:4px; }
+
+  .empty-hint{ text-align:center; color:var(--ink-soft); font-size:13px; padding:24px 10px; }
+
+  .bar-row{ margin-bottom:8px; }
+  .bar-row .b-top{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px; }
+  .bar-row .b-track{ background:var(--line); border-radius:6px; height:9px; overflow:hidden; }
+  .bar-row .b-fill{ height:100%; border-radius:6px; }
+  .bar-row .b-fill.thu{ background:var(--green); }
+  .bar-row .b-fill.chi{ background:var(--red); }
+
+  table.report-table{ width:100%; border-collapse:collapse; margin-top:6px; }
+  table.report-table th, table.report-table td{
+    padding:7px 6px; font-size:12px; border-bottom:1px solid var(--line); text-align:right;
+  }
+  table.report-table th:first-child, table.report-table td:first-child{ text-align:left; }
+  table.report-table th{ color:var(--ink-soft); font-size:10.5px; text-transform:uppercase; }
+  table.report-table td.thu{ color:var(--green); font-weight:700; }
+  table.report-table td.chi{ color:var(--red); font-weight:700; }
+  table.report-table td.net.pos{ color:var(--green); font-weight:800; }
+  table.report-table td.net.neg{ color:var(--red); font-weight:800; }
+
+  .cat-edit-row{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .cat-edit-row input[type=text]{ flex:1; }
+  .cat-edit-row button{ background:none; border:none; color:var(--red); font-size:18px; font-weight:800; }
+
+  .toast{
+    position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px;
+    font-size:13px; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s;
+    max-width:90%; text-align:center;
+  }
+  .toast.show{ opacity:0.95; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="title">📒 Thu Chi Quán</div>
+  <a class="homelink" href="./index.html">🍜 App order</a>
+</header>
+
+<main>
+
+  <!-- VIEW: ENTRY -->
+  <section class="view active" id="view-entry">
+    <div class="section-title">➕ Thêm khoản thu / chi</div>
+    <div class="card">
+      <div class="toggle-row">
+        <button id="typeThuBtn" onclick="pickType('Thu')">💰 Thu</button>
+        <button id="typeChiBtn" onclick="pickType('Chi')">📤 Chi</button>
+      </div>
+      <div class="field">
+        <label>Hạng mục</label>
+        <select id="entryCategory"></select>
+      </div>
+      <div class="field">
+        <label>Diễn giải</label>
+        <input type="text" id="entryDesc" placeholder="VD: Bán buổi sáng, mua rau ở chợ...">
+      </div>
+      <div class="field">
+        <label>Số tiền (đ)</label>
+        <input type="number" id="entryAmount" placeholder="0" min="0">
+      </div>
+      <div class="field">
+        <label>Ngày</label>
+        <input type="date" id="entryDate">
+      </div>
+      <div class="toggle-row">
+        <button id="payCashBtn" onclick="pickPay('Tiền mặt')">💵 Tiền mặt</button>
+        <button id="payBankBtn" onclick="pickPay('Chuyển khoản')">🏦 Chuyển khoản</button>
+      </div>
+      <div class="field">
+        <label>Ghi chú (không bắt buộc)</label>
+        <input type="text" id="entryNote" placeholder="Ghi chú thêm nếu có">
+      </div>
+      <button class="btn" onclick="addEntry()">+ Lưu khoản này</button>
+    </div>
+
+    <div class="section-title">📋 Danh sách đã ghi</div>
+    <div class="filter-row" id="entryFilterRow"></div>
+    <div class="stat-row" id="entryStatRow"></div>
+    <div id="entryList"></div>
+    <div id="entryEmptyHint" class="empty-hint" style="display:none;">Chưa có khoản thu chi nào trong khoảng này.</div>
+  </section>
+
+  <!-- VIEW: REPORT -->
+  <section class="view" id="view-report">
+    <div class="section-title">📅 Chọn tháng</div>
+    <div class="field"><input type="month" id="reportMonth"></div>
+
+    <div class="stat-row" id="reportStatRow"></div>
+
+    <div class="section-title">🍜 Cơ cấu THU theo hạng mục</div>
+    <div class="card" id="reportThuBars"></div>
+
+    <div class="section-title">🧾 Cơ cấu CHI theo hạng mục</div>
+    <div class="card" id="reportChiBars"></div>
+
+    <div class="section-title">📆 Chi tiết theo ngày trong tháng</div>
+    <div class="card">
+      <table class="report-table">
+        <thead><tr><th>Ngày</th><th>Thu</th><th>Chi</th><th>Lãi/Lỗ</th></tr></thead>
+        <tbody id="reportDayTable"></tbody>
+      </table>
+      <div id="reportDayEmpty" class="empty-hint" style="display:none;">Chưa có dữ liệu trong tháng này.</div>
+    </div>
+  </section>
+
+  <!-- VIEW: SETTINGS -->
+  <section class="view" id="view-settings">
+    <div class="section-title">Danh mục hạng mục THU</div>
+    <div id="thuCatEditList"></div>
+    <button class="btn ghost small" onclick="addCatRow('thu')">+ Thêm hạng mục thu</button>
+
+    <div class="section-title">Danh mục hạng mục CHI</div>
+    <div id="chiCatEditList"></div>
+    <button class="btn ghost small" onclick="addCatRow('chi')">+ Thêm hạng mục chi</button>
+    <button class="btn" style="margin-top:16px;" onclick="saveCategories()">💾 Lưu danh mục</button>
+
+    <div class="section-title">⬇️ Nhập dữ liệu từ App order</div>
+    <div class="banner">Vào App order → Lịch sử → "Xuất CSV cho Excel thu chi" để tải file CSV doanh thu đã bán, rồi dán nội dung file đó (mở bằng Notepad hoặc trình soạn thảo) vào ô bên dưới. Các dòng doanh thu sẽ tự động được thêm vào mục Thu, không bị trùng nếu nhập lại nhiều lần.</div>
+    <div class="field">
+      <label>Chọn file CSV</label>
+      <input type="file" id="csvFileInput" accept=".csv,text/csv">
+    </div>
+    <div class="field">
+      <label>Hoặc dán nội dung CSV vào đây</label>
+      <textarea id="csvPasteArea" placeholder="Ngày,Hạng mục,Diễn giải,Số tiền,PT thanh toán,Ghi chú&#10;..."></textarea>
+    </div>
+    <button class="btn secondary" onclick="importCSVFromPaste()">📥 Nhập dữ liệu CSV ở trên</button>
+
+    <div class="section-title">⬆️ Xuất dữ liệu</div>
+    <button class="btn secondary" onclick="exportAllCSV()">⬇️ Xuất CSV toàn bộ Thu Chi (backup)</button>
+
+    <div class="section-title">⚠️ Khác</div>
+    <button class="btn ghost" onclick="resetAllData()">⚠️ Xoá toàn bộ dữ liệu thu chi (làm lại từ đầu)</button>
+  </section>
+
+</main>
+
+<nav class="bottomnav">
+  <button id="navEntry" class="active" onclick="goto('entry')"><span class="ic">✍️</span>Nhập liệu</button>
+  <button id="navReport" onclick="goto('report')"><span class="ic">📊</span>Báo cáo</button>
+  <button id="navSettings" onclick="goto('settings')"><span class="ic">⚙️</span>Cài đặt</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ STATE ============ */
+const STORAGE_KEY = 'thuChiPOS_v1';
+
+const DEFAULT_THU_CATS = [
+  "Thu - Hủ tiếu","Thu - Mì tươi","Thu - Mì gói","Thu - Mì lớn","Thu - Bánh canh","Thu - Nui",
+  "Thu - Nước uống/Cà phê","Thu - Bán mang về/Giao hàng","Thu - Khác"
+];
+const DEFAULT_CHI_CATS = [
+  "Chi - Nguyên liệu tươi sống (thịt, sườn, xương ống, hải sản)",
+  "Chi - Rau củ quả",
+  "Chi - Bánh/Sợi (hủ tiếu, mì tươi, mì gói, mì lớn, bánh canh, nui)",
+  "Chi - Gia vị/Đồ khô",
+  "Chi - Gas",
+  "Chi - Điện, nước",
+  "Chi - Thuê mặt bằng",
+  "Chi - Nhân công/Phụ bán",
+  "Chi - Vật tư tiêu hao (túi, ly, đũa, khăn giấy)",
+  "Chi - Sửa chữa/Bảo trì dụng cụ",
+  "Chi - Vận chuyển/Gửi xe/Chợ",
+  "Chi - Thuế, phí",
+  "Chi - Mua sắm dụng cụ/Tài sản",
+  "Chi - Chi phí khác"
+];
+
+function newId(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function defaultState(){
+  return {
+    thuCategories: DEFAULT_THU_CATS.slice(),
+    chiCategories: DEFAULT_CHI_CATS.slice(),
+    entries: []
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    const def = defaultState();
+    return {
+      thuCategories: (parsed.thuCategories && parsed.thuCategories.length) ? parsed.thuCategories : def.thuCategories,
+      chiCategories: (parsed.chiCategories && parsed.chiCategories.length) ? parsed.chiCategories : def.chiCategories,
+      entries: parsed.entries || []
+    };
+  }catch(e){ return defaultState(); }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+let state = loadState();
+
+/* ============ NAVIGATION ============ */
+let currentView = 'entry';
+let selType = 'Thu';
+let selPay = 'Tiền mặt';
+let selRange = 'today';
+
+function goto(view){
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.bottomnav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav'+view.charAt(0).toUpperCase()+view.slice(1)).classList.add('active');
+
+  if(view === 'entry') renderEntryView();
+  if(view === 'report') renderReportView();
+  if(view === 'settings') renderSettingsView();
+}
+
+/* ============ HELPERS ============ */
+function fmt(n){ return Math.round(n||0).toLocaleString('vi-VN'); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function todayISO(){ const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function isoToDisplay(iso){ const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; }
+function isoMonth(iso){ return iso.slice(0,7); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function csvEsc(s){ return '"' + String(s).replace(/"/g,'""') + '"'; }
+
+/* ============ ENTRY VIEW ============ */
+function pickType(t){
+  selType = t;
+  document.getElementById('typeThuBtn').classList.toggle('sel-thu', t==='Thu');
+  document.getElementById('typeChiBtn').classList.toggle('sel-chi', t==='Chi');
+  renderCategoryOptions();
+}
+function pickPay(p){
+  selPay = p;
+  document.getElementById('payCashBtn').classList.toggle('sel', p==='Tiền mặt');
+  document.getElementById('payBankBtn').classList.toggle('sel', p==='Chuyển khoản');
+}
+function renderCategoryOptions(){
+  const list = selType === 'Thu' ? state.thuCategories : state.chiCategories;
+  const sel = document.getElementById('entryCategory');
+  sel.innerHTML = list.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+}
+function addEntry(){
+  const category = document.getElementById('entryCategory').value;
+  const desc = document.getElementById('entryDesc').value.trim();
+  const amount = parseFloat(document.getElementById('entryAmount').value) || 0;
+  const date = document.getElementById('entryDate').value || todayISO();
+  const note = document.getElementById('entryNote').value.trim();
+  if(!category){ showToast('Chưa có hạng mục nào, vào Cài đặt để thêm'); return; }
+  if(amount <= 0){ showToast('Nhập số tiền lớn hơn 0'); return; }
+  state.entries.push({
+    id: newId('e'), date, type: selType, category, desc, amount,
+    payMethod: selPay, note, source: 'manual', ts: Date.now()
+  });
+  saveState();
+  document.getElementById('entryDesc').value = '';
+  document.getElementById('entryAmount').value = '';
+  document.getElementById('entryNote').value = '';
+  showToast('Đã lưu khoản ' + selType.toLowerCase());
+  renderEntryList();
+}
+function removeEntry(id){
+  state.entries = state.entries.filter(e=>e.id!==id);
+  saveState();
+  renderEntryList();
+}
+function setRange(r){
+  selRange = r;
+  renderEntryList();
+}
+function rangeStartISO(r){
+  const d = new Date();
+  if(r==='today') return todayISO();
+  if(r==='7d'){ d.setDate(d.getDate()-6); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  if(r==='30d'){ d.setDate(d.getDate()-29); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  if(r==='month'){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-01`; }
+  return null; // all
+}
+function filteredEntries(){
+  const start = rangeStartISO(selRange);
+  let list = state.entries.slice();
+  if(start) list = list.filter(e => e.date >= start);
+  return list.sort((a,b)=> b.date.localeCompare(a.date) || b.ts - a.ts);
+}
+function renderEntryView(){
+  document.getElementById('entryDate').value = todayISO();
+  pickType(selType);
+  pickPay(selPay);
+  renderEntryFilterRow();
+  renderEntryList();
+}
+function renderEntryFilterRow(){
+  const opts = [
+    {k:'today', l:'Hôm nay'}, {k:'7d', l:'7 ngày'}, {k:'30d', l:'30 ngày'},
+    {k:'month', l:'Tháng này'}, {k:'all', l:'Tất cả'}
+  ];
+  document.getElementById('entryFilterRow').innerHTML = opts.map(o=>
+    `<button class="${selRange===o.k?'active':''}" onclick="setRange('${o.k}')">${o.l}</button>`
+  ).join('');
+}
+function renderEntryList(){
+  const list = filteredEntries();
+  let totalThu = 0, totalChi = 0;
+  list.forEach(e=>{ if(e.type==='Thu') totalThu += e.amount; else totalChi += e.amount; });
+  const net = totalThu - totalChi;
+  document.getElementById('entryStatRow').innerHTML = `
+    <div class="stat-box"><div class="v pos">${fmt(totalThu)} đ</div><div class="l">Tổng thu</div></div>
+    <div class="stat-box"><div class="v neg">${fmt(totalChi)} đ</div><div class="l">Tổng chi</div></div>
+    <div class="stat-box"><div class="v ${net>=0?'pos':'neg'}">${fmt(net)} đ</div><div class="l">Lãi/Lỗ</div></div>
+  `;
+
+  const groups = {};
+  list.forEach(e=>{ (groups[e.date] = groups[e.date] || []).push(e); });
+  const dates = Object.keys(groups).sort((a,b)=> b.localeCompare(a));
+
+  const html = dates.map(date=>{
+    const rows = groups[date].map(e=>`
+      <div class="entry-row">
+        <div class="e-main">
+          <div class="e-cat">${escapeHtml(e.category)}${e.source==='import'?'<span class="e-src">CSV</span>':''}</div>
+          ${e.desc ? `<div class="e-desc">${escapeHtml(e.desc)}</div>` : ''}
+          ${e.note ? `<div class="e-note">${escapeHtml(e.note)}</div>` : ''}
+        </div>
+        <div class="e-amt ${e.type==='Thu'?'thu':'chi'}">${e.type==='Thu'?'+':'-'}${fmt(e.amount)} đ</div>
+        <button class="e-del" onclick="removeEntry('${e.id}')">✕</button>
+      </div>`).join('');
+    const dayThu = groups[date].filter(e=>e.type==='Thu').reduce((s,e)=>s+e.amount,0);
+    const dayChi = groups[date].filter(e=>e.type==='Chi').reduce((s,e)=>s+e.amount,0);
+    return `<div class="entry-day-group">
+      <div class="entry-day-head"><span>${isoToDisplay(date)}</span><span>Thu ${fmt(dayThu)} · Chi ${fmt(dayChi)}</span></div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  document.getElementById('entryList').innerHTML = html;
+  document.getElementById('entryEmptyHint').style.display = list.length ? 'none' : 'block';
+}
+
+/* ============ REPORT VIEW ============ */
+function renderReportView(){
+  const monthInput = document.getElementById('reportMonth');
+  if(!monthInput.value) monthInput.value = todayISO().slice(0,7);
+  monthInput.onchange = renderReportForMonth;
+  renderReportForMonth();
+}
+function renderReportForMonth(){
+  const month = document.getElementById('reportMonth').value || todayISO().slice(0,7);
+  const list = state.entries.filter(e => isoMonth(e.date) === month);
+
+  let totalThu = 0, totalChi = 0;
+  const thuByCat = {}, chiByCat = {};
+  list.forEach(e=>{
+    if(e.type==='Thu'){ totalThu += e.amount; thuByCat[e.category] = (thuByCat[e.category]||0) + e.amount; }
+    else { totalChi += e.amount; chiByCat[e.category] = (chiByCat[e.category]||0) + e.amount; }
+  });
+  const net = totalThu - totalChi;
+
+  document.getElementById('reportStatRow').innerHTML = `
+    <div class="stat-box"><div class="v pos">${fmt(totalThu)} đ</div><div class="l">Tổng thu tháng</div></div>
+    <div class="stat-box"><div class="v neg">${fmt(totalChi)} đ</div><div class="l">Tổng chi tháng</div></div>
+    <div class="stat-box"><div class="v ${net>=0?'pos':'neg'}">${fmt(net)} đ</div><div class="l">Lãi/Lỗ tháng</div></div>
+  `;
+
+  document.getElementById('reportThuBars').innerHTML = renderBars(thuByCat, 'thu') || '<div class="empty-hint">Chưa có khoản thu nào trong tháng này.</div>';
+  document.getElementById('reportChiBars').innerHTML = renderBars(chiByCat, 'chi') || '<div class="empty-hint">Chưa có khoản chi nào trong tháng này.</div>';
+
+  const dayMap = {};
+  list.forEach(e=>{
+    const d = dayMap[e.date] = dayMap[e.date] || {thu:0, chi:0};
+    if(e.type==='Thu') d.thu += e.amount; else d.chi += e.amount;
+  });
+  const days = Object.keys(dayMap).sort((a,b)=> b.localeCompare(a));
+  document.getElementById('reportDayTable').innerHTML = days.map(d=>{
+    const n = dayMap[d].thu - dayMap[d].chi;
+    return `<tr>
+      <td>${isoToDisplay(d)}</td>
+      <td class="thu">${fmt(dayMap[d].thu)}</td>
+      <td class="chi">${fmt(dayMap[d].chi)}</td>
+      <td class="net ${n>=0?'pos':'neg'}">${fmt(n)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('reportDayEmpty').style.display = days.length ? 'none' : 'block';
+}
+function renderBars(byCat, kind){
+  const entries = Object.entries(byCat).sort((a,b)=> b[1]-a[1]);
+  if(!entries.length) return '';
+  const max = entries[0][1] || 1;
+  return entries.map(([cat, amt])=>`
+    <div class="bar-row">
+      <div class="b-top"><span>${escapeHtml(cat)}</span><span>${fmt(amt)} đ</span></div>
+      <div class="b-track"><div class="b-fill ${kind}" style="width:${Math.max(2, amt/max*100)}%;"></div></div>
+    </div>`).join('');
+}
+
+/* ============ SETTINGS VIEW ============ */
+function renderSettingsView(){
+  renderCatEditList('thu');
+  renderCatEditList('chi');
+}
+function renderCatEditList(kind){
+  const arr = kind==='thu' ? state.thuCategories : state.chiCategories;
+  const box = document.getElementById(kind+'CatEditList');
+  box.innerHTML = arr.map((name, i)=>`
+    <div class="cat-edit-row">
+      <input type="text" value="${escapeHtml(name)}" oninput="updateCatDraft('${kind}',${i},this.value)">
+      <button onclick="removeCatRow('${kind}',${i})">✕</button>
+    </div>`).join('');
+}
+function updateCatDraft(kind, i, val){
+  const arr = kind==='thu' ? state.thuCategories : state.chiCategories;
+  arr[i] = val;
+}
+function addCatRow(kind){
+  const arr = kind==='thu' ? state.thuCategories : state.chiCategories;
+  arr.push(kind==='thu' ? 'Thu - Khác' : 'Chi - Chi phí khác');
+  renderCatEditList(kind);
+}
+function removeCatRow(kind, i){
+  const arr = kind==='thu' ? state.thuCategories : state.chiCategories;
+  arr.splice(i,1);
+  renderCatEditList(kind);
+}
+function saveCategories(){
+  saveState();
+  showToast('Đã lưu danh mục');
+}
+
+/* ============ CSV IMPORT / EXPORT ============ */
+function parseCSV(text){
+  // strip BOM
+  text = text.replace(/^﻿/, '');
+  const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim().length);
+  const rows = lines.map(line=>{
+    const out = [];
+    let cur = '', inQuotes = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(inQuotes){
+        if(ch === '"'){
+          if(line[i+1] === '"'){ cur += '"'; i++; }
+          else inQuotes = false;
+        } else cur += ch;
+      } else {
+        if(ch === '"') inQuotes = true;
+        else if(ch === ','){ out.push(cur); cur=''; }
+        else cur += ch;
+      }
+    }
+    out.push(cur);
+    return out;
+  });
+  return rows;
+}
+function csvDateToISO(s){
+  // expects dd/mm/yyyy
+  const m = String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!m) return null;
+  return `${m[3]}-${pad2(+m[2])}-${pad2(+m[1])}`;
+}
+function importCSVRows(rows){
+  let added = 0, skipped = 0, invalid = 0;
+  const existingKeys = new Set(state.entries.map(e => e.date+'|'+e.category+'|'+e.desc+'|'+e.amount+'|'+e.note));
+  const newThuCats = new Set(state.thuCategories);
+  rows.forEach(row=>{
+    if(!row.length || /^ng[aà]y$/i.test((row[0]||'').trim())) return; // skip header row
+    const [dateRaw, category, desc, amountRaw, payMethod, note] = row;
+    if(!dateRaw || !category) return;
+    const iso = csvDateToISO(dateRaw);
+    const amount = parseFloat(String(amountRaw).replace(/[^\d.-]/g,''));
+    if(!iso || !amount || amount<=0){ invalid++; return; }
+    const type = category.trim().startsWith('Thu') ? 'Thu' : (category.trim().startsWith('Chi') ? 'Chi' : 'Thu');
+    const key = iso+'|'+category+'|'+(desc||'')+'|'+amount+'|'+(note||'');
+    if(existingKeys.has(key)){ skipped++; return; }
+    existingKeys.add(key);
+    state.entries.push({
+      id: newId('e'), date: iso, type, category: category.trim(), desc: (desc||'').trim(),
+      amount, payMethod: (payMethod||'').trim() || 'Tiền mặt', note: (note||'').trim(),
+      source: 'import', ts: Date.now()
+    });
+    if(type==='Thu' && !newThuCats.has(category.trim())){ newThuCats.add(category.trim()); state.thuCategories.push(category.trim()); }
+    added++;
+  });
+  saveState();
+  return {added, skipped, invalid};
+}
+function importCSVFromPaste(){
+  const text = document.getElementById('csvPasteArea').value;
+  if(text && text.trim()){
+    const rows = parseCSV(text);
+    const r = importCSVRows(rows);
+    showToast(`Đã nhập ${r.added} dòng, bỏ qua ${r.skipped} dòng trùng${r.invalid?', '+r.invalid+' dòng lỗi':''}`);
+    document.getElementById('csvPasteArea').value = '';
+    renderEntryList();
+    return;
+  }
+  const fileInput = document.getElementById('csvFileInput');
+  if(fileInput.files && fileInput.files[0]){
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const rows = parseCSV(ev.target.result);
+      const r = importCSVRows(rows);
+      showToast(`Đã nhập ${r.added} dòng, bỏ qua ${r.skipped} dòng trùng${r.invalid?', '+r.invalid+' dòng lỗi':''}`);
+      fileInput.value = '';
+      renderEntryList();
+    };
+    reader.readAsText(fileInput.files[0], 'utf-8');
+    return;
+  }
+  showToast('Chưa chọn file hoặc dán nội dung CSV nào');
+}
+function exportAllCSV(){
+  if(state.entries.length===0){ showToast('Chưa có dữ liệu để xuất'); return; }
+  let csv = 'Ngày,Hạng mục,Diễn giải,Số tiền,PT thanh toán,Ghi chú\n';
+  state.entries.slice().sort((a,b)=> a.date.localeCompare(b.date)).forEach(e=>{
+    csv += [isoToDisplay(e.date), csvEsc(e.category), csvEsc(e.desc||''), e.amount, e.payMethod||'', csvEsc(e.note||'')].join(',') + '\n';
+  });
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ThuChi_Backup_' + todayISO() + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Đã xuất file CSV');
+}
+
+/* ============ RESET ============ */
+function resetAllData(){
+  if(confirm('Xoá toàn bộ dữ liệu thu chi đã ghi và làm lại từ đầu?')){
+    state = defaultState();
+    saveState();
+    goto('settings');
+    showToast('Đã xoá dữ liệu');
+  }
+}
+
+/* ============ INIT ============ */
+goto('entry');
+</script>
+</body>
+</html>
