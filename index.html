@@ -164,6 +164,15 @@
   .bill-preview hr{ border:none; border-top:1px dashed var(--ink-soft); margin:8px 0; }
   .bill-preview .b-row{ display:flex; justify-content:space-between; gap:6px; }
   .bill-preview .b-total{ font-weight:800; font-size:14px; }
+  .bill-preview .b-sub{ font-size:11px; }
+  .bill-preview .b-item{ margin-bottom:4px; }
+  .bill-preview .b-qty{ font-size:11px; color:var(--ink-soft); }
+  .bill-preview .b-note{ font-size:11px; font-style:italic; color:var(--ink-soft); margin:1px 0 4px; }
+  .bill-preview img{ display:block; width:120px; margin:6px auto 4px; }
+  .field select{
+    width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:14px;
+    background:var(--paper); color:var(--ink);
+  }
 
   .history-item{
     background:var(--paper); border:1px solid var(--line); border-radius:10px;
@@ -208,12 +217,12 @@
     body *{ visibility:hidden; }
     #printArea, #printArea *{ visibility:visible; }
     #printArea{
-      display:block; position:absolute; top:0; left:0; width:80mm;
+      display:block; position:absolute; top:0; left:0;
       font-family:'Courier New', monospace; font-size:12px; color:#000;
     }
-    @page{ margin:2mm; size:80mm auto; }
   }
 </style>
+<style id="dynamicPrintStyle"></style>
 </head>
 <body>
 
@@ -301,7 +310,12 @@
   <section class="view" id="view-settings">
     <div class="section-title">Thông tin quán</div>
     <div class="field"><label>Tên quán</label><input type="text" id="setShopName"></div>
+    <div class="field"><label>Địa chỉ</label><input type="text" id="setAddress" placeholder="Địa chỉ quán (hiện trên bill, để trống nếu không cần)"></div>
+    <div class="field"><label>Số điện thoại</label><input type="text" id="setPhone" placeholder="SĐT liên hệ (hiện trên bill, để trống nếu không cần)"></div>
     <div class="field"><label>Số bàn (không tính "Mang về")</label><input type="number" id="setNumTables" min="1" max="30"></div>
+
+    <div class="section-title">Khổ giấy in bill</div>
+    <div class="card-select" id="paperWidthOptions"></div>
 
     <div class="section-title">Loại bánh & giá (đ / tô)</div>
     <div id="banhTypeEditList"></div>
@@ -317,6 +331,15 @@
     <div class="section-title">Giá nước uống (đ)</div>
     <div id="drinkEditList"></div>
     <button class="btn ghost small" onclick="addDrinkRow()">+ Thêm nước uống</button>
+
+    <div class="section-title">Nhận chuyển khoản (QR trên bill)</div>
+    <div class="field">
+      <label>Ngân hàng</label>
+      <select id="setBankBin"></select>
+    </div>
+    <div class="field"><label>Số tài khoản</label><input type="text" id="setBankAccount" placeholder="Số tài khoản ngân hàng"></div>
+    <div class="field"><label>Tên chủ tài khoản</label><input type="text" id="setBankAccountName" placeholder="VD: NGUYEN VAN A (không dấu)"></div>
+    <div class="banner">Chọn "Không dùng QR" nếu bạn chưa muốn hiện mã QR chuyển khoản trên bill. Khi bật, mỗi bill in ra sẽ có QR điền sẵn đúng số tiền của đơn đó để khách quét chuyển khoản.</div>
 
     <button class="btn" style="margin-top:20px;" onclick="saveSettings()">💾 Lưu cài đặt</button>
     <button class="btn ghost" onclick="resetAllData()">⚠️ Xoá toàn bộ dữ liệu (làm lại từ đầu)</button>
@@ -344,6 +367,32 @@ const DEFAULT_DRINKS = [
   {name:"Trà đá", price:0},
   {name:"Nước ngọt", price:0}
 ];
+const BANK_LIST = [
+  {bin:'', name:'-- Không dùng QR --'},
+  {bin:'970423', name:'TPBank'},
+  {bin:'970436', name:'Vietcombank'},
+  {bin:'970422', name:'MB Bank'},
+  {bin:'970407', name:'Techcombank'},
+  {bin:'970416', name:'ACB'},
+  {bin:'970418', name:'BIDV'},
+  {bin:'970405', name:'Agribank'},
+  {bin:'970415', name:'VietinBank'},
+  {bin:'970432', name:'VPBank'},
+  {bin:'970443', name:'SHB'},
+  {bin:'970437', name:'HDBank'},
+  {bin:'970441', name:'VIB'},
+  {bin:'970448', name:'OCB'},
+  {bin:'970426', name:'MSB'},
+  {bin:'970440', name:'SeABank'},
+  {bin:'970431', name:'Eximbank'},
+  {bin:'970429', name:'SCB'},
+  {bin:'970425', name:'ABBank'},
+  {bin:'970449', name:'LPBank'},
+  {bin:'970433', name:'VietBank'},
+  {bin:'970452', name:'KienLongBank'},
+  {bin:'970428', name:'Nam A Bank'},
+  {bin:'970406', name:'DongA Bank'}
+];
 function newId(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
 function defaultState(){
@@ -351,9 +400,13 @@ function defaultState(){
   const toppingList = DEFAULT_TOPPING_NAMES.map(name=>({id:newId('t'), name, surcharge:0}));
   return {
     shopName: "Tên Quán Của Bạn",
+    address: "",
+    phone: "",
     numTables: 8,
+    paperWidth: "80",
     banhList, toppingList,
     prices: { drinks: DEFAULT_DRINKS.map(d=>({...d})) },
+    bank: { bin:"", name:"", accountNumber:"", accountName:"" },
     tables: {},
     history: []
   };
@@ -408,7 +461,8 @@ function loadState(){
     const def = defaultState();
     // shallow-merge to survive schema upgrades
     return Object.assign(def, parsed, {
-      prices: Object.assign(def.prices, parsed.prices || {})
+      prices: Object.assign(def.prices, parsed.prices || {}),
+      bank: Object.assign(def.bank, parsed.bank || {})
     });
   }catch(e){ return defaultState(); }
 }
@@ -428,6 +482,7 @@ let currentTable = null;
 let currentPayMethod = 'Tiền mặt';
 let orderTab = 'banh';
 let selBanhId = null, selToppingIds = new Set(), selNoteChips = new Set(), banhQty = 1;
+let selPaperWidth = '80';
 const NOTE_CHIP_LIST = ["Không rau","Rau giá đầy đủ","Ít bánh","Nhiều bánh"];
 
 const VIEW_TITLES = {
@@ -612,23 +667,60 @@ function renderPayment(){
   const t = getTable(currentTable);
   const total = calcTotal(t.items);
   const now = new Date();
-  const rows = t.items.map(it=>
-    `<div class="b-row"><span>${escapeHtml(it.name)}${it.note?' ('+escapeHtml(it.note)+')':''} x${it.qty}</span><span>${fmt(it.qty*it.unitPrice)}</span></div>`
-  ).join('');
+  const rows = t.items.map(it=>{
+    const noteLine = it.note ? `<div class="b-note">${escapeHtml(it.note)}</div>` : '';
+    return `<div class="b-item">
+      <div class="b-row"><span>${escapeHtml(it.name)}</span><span>${fmt(it.qty*it.unitPrice)}</span></div>
+      <div class="b-row b-qty"><span>${it.qty} x ${fmt(it.unitPrice)} đ</span><span></span></div>
+      ${noteLine}
+    </div>`;
+  }).join('');
+  const addrLine = state.address ? `<div class="b-center b-sub">${escapeHtml(state.address)}</div>` : '';
+  const phoneLine = state.phone ? `<div class="b-center b-sub">ĐT: ${escapeHtml(state.phone)}</div>` : '';
   document.getElementById('billPreview').innerHTML = `
     <div class="b-center b-title">${escapeHtml(state.shopName)}</div>
+    ${addrLine}
+    ${phoneLine}
     <div class="b-center">${tableLabel(currentTable)}</div>
     <div class="b-center">${formatDateTime(now)}</div>
     <hr>
     ${rows}
     <hr>
     <div class="b-row b-total"><span>TỔNG CỘNG</span><span>${fmt(total)} đ</span></div>
+    ${buildBankQrHtml(total)}
     <div class="b-center" style="margin-top:8px;">Cảm ơn quý khách!</div>
   `;
 }
+function buildBankQrHtml(total){
+  const b = state.bank;
+  if(!b || !b.bin || !b.accountNumber) return '';
+  const addInfo = encodeURIComponent(tableLabel(currentTable) + ' thanh toan');
+  const accName = encodeURIComponent(b.accountName || '');
+  const qrUrl = `https://img.vietqr.io/image/${b.bin}-${b.accountNumber}-compact2.png?amount=${Math.max(0,Math.round(total))}&addInfo=${addInfo}&accountName=${accName}`;
+  return `<div class="b-center" style="margin-top:8px;">
+    <img src="${qrUrl}" alt="QR chuyen khoan">
+    <div style="font-size:11px;">Quét QR chuyển khoản ${fmt(total)} đ</div>
+    <div style="font-size:11px;">${escapeHtml(b.name||'')} - ${escapeHtml(b.accountNumber)}</div>
+    <div style="font-size:11px;">${escapeHtml(b.accountName||'')}</div>
+  </div>`;
+}
 function printBill(){
   document.getElementById('printArea').innerHTML = document.getElementById('billPreview').innerHTML;
-  window.print();
+  const w = state.paperWidth === '58' ? '58mm' : '80mm';
+  document.getElementById('dynamicPrintStyle').textContent =
+    `#printArea{ width:${w}; } @page{ margin:2mm; size:${w} auto; }`;
+  const imgs = document.getElementById('printArea').querySelectorAll('img');
+  if(imgs.length){
+    let loaded = 0;
+    const done = () => { loaded++; if(loaded>=imgs.length) window.print(); };
+    imgs.forEach(img=>{
+      if(img.complete) done();
+      else { img.addEventListener('load', done); img.addEventListener('error', done); }
+    });
+    setTimeout(()=>{ if(loaded<imgs.length) window.print(); }, 2500);
+  } else {
+    window.print();
+  }
 }
 function confirmPayment(){
   const t = getTable(currentTable);
@@ -691,12 +783,31 @@ function csvEsc(s){ return '"' + String(s).replace(/"/g,'""') + '"'; }
 /* ============ SETTINGS VIEW ============ */
 function renderSettings(){
   document.getElementById('setShopName').value = state.shopName;
+  document.getElementById('setAddress').value = state.address || '';
+  document.getElementById('setPhone').value = state.phone || '';
   document.getElementById('setNumTables').value = state.numTables;
+
+  selPaperWidth = state.paperWidth || '80';
+  renderPaperWidthOptions();
 
   renderBanhTypeEditList();
   renderToppingTypeEditList();
   renderDrinkEditList();
+
+  const bankSel = document.getElementById('setBankBin');
+  bankSel.innerHTML = BANK_LIST.map(b=>
+    `<option value="${b.bin}" ${state.bank && state.bank.bin===b.bin ? 'selected':''}>${escapeHtml(b.name)}</option>`
+  ).join('');
+  document.getElementById('setBankAccount').value = (state.bank && state.bank.accountNumber) || '';
+  document.getElementById('setBankAccountName').value = (state.bank && state.bank.accountName) || '';
 }
+function renderPaperWidthOptions(){
+  const box = document.getElementById('paperWidthOptions');
+  box.innerHTML = ['58','80'].map(w=>
+    `<div class="opt ${selPaperWidth===w?'sel':''}" onclick="pickPaperWidth('${w}')">${w}mm</div>`
+  ).join('');
+}
+function pickPaperWidth(w){ selPaperWidth = w; renderPaperWidthOptions(); }
 function renderBanhTypeEditList(){
   const box = document.getElementById('banhTypeEditList');
   box.innerHTML = state.banhList.map(b=>`
@@ -775,7 +886,19 @@ function removeDrinkRow(i){
 }
 function saveSettings(){
   state.shopName = document.getElementById('setShopName').value.trim() || 'Quán Hủ Tiếu';
+  state.address = document.getElementById('setAddress').value.trim();
+  state.phone = document.getElementById('setPhone').value.trim();
   state.numTables = Math.max(1, Math.min(30, parseInt(document.getElementById('setNumTables').value) || 8));
+  state.paperWidth = selPaperWidth === '58' ? '58' : '80';
+
+  const bankBinSel = document.getElementById('setBankBin').value;
+  const bankObj = BANK_LIST.find(b=>b.bin===bankBinSel);
+  state.bank = {
+    bin: bankBinSel,
+    name: bankObj ? bankObj.name : '',
+    accountNumber: document.getElementById('setBankAccount').value.trim(),
+    accountName: document.getElementById('setBankAccountName').value.trim().toUpperCase()
+  };
 
   captureBanhToppingEdits();
 
