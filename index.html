@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Order & In Bill — Quán Hủ Tiếu</title>
+<style>
+  :root{
+    --cream:#FFF8EE;
+    --paper:#FFFFFF;
+    --ink:#3A2618;
+    --ink-soft:#6B4F3B;
+    --terracotta:#C4502A;
+    --terracotta-dark:#9C3D1F;
+    --gold:#D99A3D;
+    --line:#E8D9C4;
+    --green:#2E7D32;
+    --red:#C62828;
+    --bg:#EDE2CF;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family:'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  header.topbar{
+    background:var(--terracotta);
+    color:#fff;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky; top:0; z-index:20;
+    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+  }
+  header.topbar .title{ font-size:17px; font-weight:800; letter-spacing:0.5px; display:flex; align-items:center; gap:8px;}
+  header.topbar button.back{
+    background:rgba(255,255,255,0.18); border:none; color:#fff;
+    padding:8px 12px; border-radius:8px; font-size:14px; font-weight:600;
+  }
+  main{ flex:1; padding:14px 14px 90px; max-width:640px; margin:0 auto; width:100%; }
+  nav.bottomnav{
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--paper); border-top:1px solid var(--line);
+    display:flex; z-index:20;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.08);
+  }
+  nav.bottomnav button{
+    flex:1; background:none; border:none; padding:10px 4px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    color:var(--ink-soft); font-size:11.5px; font-weight:600;
+  }
+  nav.bottomnav button .ic{ font-size:20px; }
+  nav.bottomnav button.active{ color:var(--terracotta-dark); }
+
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  .grid-tables{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px; }
+  .table-card{
+    background:var(--paper); border:2px solid var(--line); border-radius:12px;
+    padding:14px 8px; text-align:center; font-weight:700; color:var(--ink);
+    display:flex; flex-direction:column; gap:4px; min-height:78px; justify-content:center;
+  }
+  .table-card.busy{ border-color:var(--terracotta); background:#FBEFDD; }
+  .table-card .sub{ font-size:11px; color:var(--ink-soft); font-weight:500; }
+  .table-card.busy .sub{ color:var(--terracotta-dark); font-weight:700; }
+  .takeaway-card{ grid-column:1 / -1; }
+
+  .section-title{
+    font-size:13px; letter-spacing:1px; text-transform:uppercase; font-weight:800;
+    color:var(--terracotta-dark); margin:18px 0 8px; display:flex; align-items:center; gap:6px;
+  }
+  .banner{
+    background:#FCEFD0; border:1px solid var(--gold); border-radius:10px;
+    padding:10px 12px; font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;
+  }
+  .banner a{ color:var(--terracotta-dark); font-weight:700; }
+
+  .tabbar{ display:flex; gap:8px; margin-bottom:12px; }
+  .tabbar button{
+    flex:1; padding:9px; border-radius:999px; border:1px solid var(--line);
+    background:var(--paper); font-weight:700; font-size:13px; color:var(--ink-soft);
+  }
+  .tabbar button.active{ background:var(--terracotta); color:#fff; border-color:var(--terracotta); }
+
+  .card-select{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px;
+  }
+  .opt{
+    background:var(--paper); border:2px solid var(--line); border-radius:10px;
+    padding:10px 8px; text-align:center; font-weight:700; font-size:13.5px; color:var(--ink);
+  }
+  .opt.sel{ border-color:var(--terracotta); background:#FDEDE3; color:var(--terracotta-dark); }
+  .opt .price{ display:block; font-size:11px; font-weight:500; color:var(--ink-soft); margin-top:2px; }
+  .opt.sel .price{ color:var(--terracotta-dark); }
+
+  .qty-row{ display:flex; align-items:center; justify-content:center; gap:16px; margin:14px 0; }
+  .qty-row button{
+    width:44px; height:44px; border-radius:50%; border:none; background:var(--terracotta);
+    color:#fff; font-size:22px; font-weight:800;
+  }
+  .qty-row .qty-val{ font-size:22px; font-weight:800; min-width:32px; text-align:center; }
+
+  .btn{
+    display:block; width:100%; padding:13px; border:none; border-radius:10px;
+    font-size:15px; font-weight:800; letter-spacing:0.3px; background:var(--terracotta); color:#fff;
+    margin-top:6px;
+  }
+  .btn.secondary{ background:var(--paper); color:var(--terracotta-dark); border:2px solid var(--terracotta); }
+  .btn.ghost{ background:none; color:var(--ink-soft); border:1px solid var(--line); }
+  .btn.small{ padding:8px 10px; font-size:12.5px; width:auto; }
+  .btn.block-green{ background:var(--green); }
+  .btn:disabled{ opacity:0.45; }
+
+  .drink-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; margin-bottom:8px;
+  }
+  .drink-row .name{ font-weight:700; font-size:13.5px; }
+  .drink-row .price{ font-size:11.5px; color:var(--ink-soft); }
+  .drink-row .stepper{ display:flex; align-items:center; gap:10px; }
+  .drink-row .stepper button{
+    width:30px; height:30px; border-radius:50%; border:none; background:#F1E4D0; color:var(--terracotta-dark);
+    font-size:17px; font-weight:800;
+  }
+
+  table.order-list{ width:100%; border-collapse:collapse; margin-top:6px; }
+  table.order-list th, table.order-list td{
+    padding:7px 6px; font-size:12.5px; border-bottom:1px solid var(--line); text-align:left;
+  }
+  table.order-list th{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; }
+  table.order-list td.num{ text-align:right; white-space:nowrap; }
+  table.order-list td.del{ text-align:center; color:var(--red); font-weight:800; width:26px; }
+
+  .total-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:17px; font-weight:800; color:var(--terracotta-dark);
+    padding:12px 0; border-top:2px solid var(--line); margin-top:6px;
+  }
+
+  .empty-hint{ text-align:center; color:var(--ink-soft); font-size:13px; padding:30px 10px; }
+
+  .paymethod{ display:flex; gap:10px; margin:10px 0 16px; }
+  .paymethod button{
+    flex:1; padding:11px; border-radius:10px; border:2px solid var(--line); background:var(--paper);
+    font-weight:700; font-size:13.5px; color:var(--ink-soft);
+  }
+  .paymethod button.sel{ border-color:var(--terracotta); color:var(--terracotta-dark); background:#FDEDE3; }
+
+  .bill-preview{
+    background:var(--paper); border:1px dashed var(--ink-soft); border-radius:8px;
+    padding:14px; font-family:'Courier New', monospace; font-size:12.5px; color:var(--ink);
+  }
+  .bill-preview .b-center{ text-align:center; }
+  .bill-preview .b-title{ font-weight:800; font-size:15px; }
+  .bill-preview hr{ border:none; border-top:1px dashed var(--ink-soft); margin:8px 0; }
+  .bill-preview .b-row{ display:flex; justify-content:space-between; gap:6px; }
+  .bill-preview .b-total{ font-weight:800; font-size:14px; }
+
+  .history-item{
+    background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; margin-bottom:8px;
+  }
+  .history-item .h-top{ display:flex; justify-content:space-between; font-weight:700; font-size:13.5px; }
+  .history-item .h-sub{ font-size:11.5px; color:var(--ink-soft); margin-top:2px; }
+
+  .stat-row{ display:flex; gap:10px; margin-bottom:14px; }
+  .stat-box{
+    flex:1; background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    padding:12px; text-align:center;
+  }
+  .stat-box .v{ font-size:18px; font-weight:800; color:var(--terracotta-dark); }
+  .stat-box .l{ font-size:11px; color:var(--ink-soft); margin-top:2px; }
+
+  .field{ margin-bottom:12px; }
+  .field label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:4px; }
+  .field input{
+    width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:14px;
+    background:var(--paper); color:var(--ink);
+  }
+  .price-matrix{ width:100%; border-collapse:collapse; margin-top:6px; }
+  .price-matrix th, .price-matrix td{ border:1px solid var(--line); padding:5px; text-align:center; font-size:11.5px; }
+  .price-matrix th{ background:#FBEFDD; color:var(--terracotta-dark); }
+  .price-matrix input{ width:100%; border:none; text-align:center; font-size:12px; background:transparent; }
+  .drink-edit-row{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .drink-edit-row input[type=text]{ flex:2; }
+  .drink-edit-row input[type=number]{ flex:1; }
+  .drink-edit-row button{ background:none; border:none; color:var(--red); font-size:18px; font-weight:800; }
+
+  .toast{
+    position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px;
+    font-size:13px; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s;
+  }
+  .toast.show{ opacity:0.95; }
+
+  #printArea{ display:none; }
+
+  @media print{
+    body *{ visibility:hidden; }
+    #printArea, #printArea *{ visibility:visible; }
+    #printArea{
+      display:block; position:absolute; top:0; left:0; width:80mm;
+      font-family:'Courier New', monospace; font-size:12px; color:#000;
+    }
+    @page{ margin:2mm; size:80mm auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="title" id="topTitle">🍜 Order Quán</div>
+  <button class="back" id="backBtn" style="display:none;">‹ Quay lại</button>
+</header>
+
+<main>
+
+  <!-- VIEW: TABLES -->
+  <section class="view active" id="view-tables">
+    <div class="banner" id="priceWarnBanner" style="display:none;">
+      Bạn chưa cài đặt giá món. Vào <a href="#" onclick="goto('settings');return false;">Cài đặt</a> để nhập giá trước khi bán.
+    </div>
+    <div class="section-title">🍽️ Chọn bàn</div>
+    <div class="grid-tables" id="tablesGrid"></div>
+  </section>
+
+  <!-- VIEW: ORDER -->
+  <section class="view" id="view-order">
+    <div class="tabbar">
+      <button id="tabBanhBtn" class="active" onclick="switchOrderTab('banh')">Bánh</button>
+      <button id="tabDrinkBtn" onclick="switchOrderTab('drink')">Nước uống</button>
+    </div>
+
+    <div id="panelBanh">
+      <div class="section-title">1. Chọn bánh</div>
+      <div class="card-select" id="banhOptions"></div>
+      <div class="section-title">2. Chọn topping (chọn được nhiều)</div>
+      <div class="card-select" id="toppingOptions"></div>
+      <div class="section-title">3. Khô hay nước?</div>
+      <div class="card-select" id="khoNuocOptions"></div>
+      <div class="section-title">4. Ghi chú</div>
+      <div class="card-select" id="noteChipsOptions"></div>
+      <div class="field"><input type="text" id="noteFreeText" placeholder="Ghi chú thêm khác (nếu có)"></div>
+      <div class="qty-row">
+        <button onclick="changeQty(-1)">−</button>
+        <div class="qty-val" id="banhQty">1</div>
+        <button onclick="changeQty(1)">+</button>
+      </div>
+      <button class="btn" onclick="addBanhToOrder()">+ Thêm vào đơn</button>
+    </div>
+
+    <div id="panelDrink" style="display:none;">
+      <div class="section-title">Chọn nước uống</div>
+      <div id="drinkList"></div>
+    </div>
+
+    <div class="section-title">🧾 Đơn hiện tại — <span id="orderTableName"></span></div>
+    <table class="order-list" id="orderItemsTable">
+      <thead><tr><th>Món</th><th>SL</th><th class="num">T.tiền</th><th></th></tr></thead>
+      <tbody id="orderItemsBody"></tbody>
+    </table>
+    <div id="orderEmptyHint" class="empty-hint">Chưa có món nào trong đơn.</div>
+    <div class="total-row"><span>Tổng cộng</span><span id="orderTotal">0 đ</span></div>
+    <button class="btn block-green" id="goPaymentBtn" onclick="goto('payment')">Thanh toán & In bill</button>
+  </section>
+
+  <!-- VIEW: PAYMENT -->
+  <section class="view" id="view-payment">
+    <div class="section-title">Phương thức thanh toán</div>
+    <div class="paymethod">
+      <button id="payCashBtn" class="sel" onclick="setPayMethod('Tiền mặt')">💵 Tiền mặt</button>
+      <button id="payBankBtn" onclick="setPayMethod('Chuyển khoản')">🏦 Chuyển khoản</button>
+    </div>
+    <div class="section-title">Xem trước hoá đơn</div>
+    <div class="bill-preview" id="billPreview"></div>
+    <button class="btn secondary" onclick="printBill()">🖨️ In bill</button>
+    <button class="btn block-green" onclick="confirmPayment()">✅ Xác nhận đã thanh toán</button>
+  </section>
+
+  <!-- VIEW: HISTORY -->
+  <section class="view" id="view-history">
+    <div class="section-title">📅 Hôm nay</div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="v" id="statCount">0</div><div class="l">Đơn đã bán</div></div>
+      <div class="stat-box"><div class="v" id="statRevenue">0 đ</div><div class="l">Doanh thu</div></div>
+    </div>
+    <button class="btn secondary" onclick="exportCSV()">⬇️ Xuất CSV cho Excel thu chi</button>
+    <div class="section-title" style="margin-top:18px;">Danh sách đơn</div>
+    <div id="historyList"></div>
+    <div id="historyEmptyHint" class="empty-hint" style="display:none;">Chưa có đơn nào hôm nay.</div>
+  </section>
+
+  <!-- VIEW: SETTINGS -->
+  <section class="view" id="view-settings">
+    <div class="section-title">Thông tin quán</div>
+    <div class="field"><label>Tên quán</label><input type="text" id="setShopName"></div>
+    <div class="field"><label>Số bàn (không tính "Mang về")</label><input type="number" id="setNumTables" min="1" max="30"></div>
+
+    <div class="section-title">Loại bánh & giá (đ / tô)</div>
+    <div id="banhTypeEditList"></div>
+    <button class="btn ghost small" onclick="addBanhTypeRow()">+ Thêm loại bánh</button>
+
+    <div class="section-title">Loại topping & phụ thu (đ)</div>
+    <div id="toppingTypeEditList"></div>
+    <button class="btn ghost small" onclick="addToppingTypeRow()">+ Thêm loại topping</button>
+    <div class="banner">Giá 1 tô = giá bánh + tổng phụ thu của (các) topping đã chọn. Để phụ thu = 0 nếu topping đó không tính thêm tiền.</div>
+
+    <div class="banner">Nếu bạn đổi tên/thêm/xoá loại bánh hoặc topping ở đây, nhớ cập nhật lại sheet "Danh mục" trong file Excel quản lý thu chi cho khớp, để số liệu xuất CSV vẫn tính đúng.</div>
+
+    <div class="section-title">Giá nước uống (đ)</div>
+    <div id="drinkEditList"></div>
+    <button class="btn ghost small" onclick="addDrinkRow()">+ Thêm nước uống</button>
+
+    <button class="btn" style="margin-top:20px;" onclick="saveSettings()">💾 Lưu cài đặt</button>
+    <button class="btn ghost" onclick="resetAllData()">⚠️ Xoá toàn bộ dữ liệu (làm lại từ đầu)</button>
+  </section>
+
+</main>
+
+<nav class="bottomnav">
+  <button id="navTables" class="active" onclick="goto('tables')"><span class="ic">🍽️</span>Bàn</button>
+  <button id="navHistory" onclick="goto('history')"><span class="ic">📋</span>Lịch sử</button>
+  <button id="navSettings" onclick="goto('settings')"><span class="ic">⚙️</span>Cài đặt</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<div id="printArea"></div>
+
+<script>
+/* ============ STATE ============ */
+const STORAGE_KEY = 'huTieuPOS_v1';
+const DEFAULT_BANH_NAMES = ["Hủ tiếu","Mì tươi","Mì gói","Mì lớn","Bánh canh","Nui"];
+const DEFAULT_TOPPING_NAMES = ["Thập cẩm","Sườn","Xương ống"];
+const DEFAULT_DRINKS = [
+  {name:"Cà phê đen", price:0},
+  {name:"Cà phê sữa", price:0},
+  {name:"Trà đá", price:0},
+  {name:"Nước ngọt", price:0}
+];
+function newId(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function defaultState(){
+  const banhList = DEFAULT_BANH_NAMES.map(name=>({id:newId('b'), name, price:0}));
+  const toppingList = DEFAULT_TOPPING_NAMES.map(name=>({id:newId('t'), name, surcharge:0}));
+  return {
+    shopName: "Tên Quán Của Bạn",
+    numTables: 8,
+    banhList, toppingList,
+    prices: { drinks: DEFAULT_DRINKS.map(d=>({...d})) },
+    tables: {},
+    history: []
+  };
+}
+
+let state = loadState();
+
+function migrateState(parsed){
+  if(!parsed || !parsed.prices) return parsed;
+  // v1 (no banhList/toppingList at all): prices.matrix was keyed by dish/topping NAME strings.
+  if(!parsed.banhList){
+    const oldMatrix = parsed.prices.matrix || {};
+    const banhNames = Object.keys(oldMatrix).length ? Object.keys(oldMatrix) : DEFAULT_BANH_NAMES;
+    parsed.banhList = banhNames.map(name=>({id:newId('b'), name}));
+    parsed.toppingList = DEFAULT_TOPPING_NAMES.map(name=>({id:newId('t'), name}));
+    const idMatrix = {};
+    parsed.banhList.forEach(b=>{
+      idMatrix[b.id] = {};
+      parsed.toppingList.forEach(t=>{ idMatrix[b.id][t.id] = (oldMatrix[b.name] && oldMatrix[b.name][t.name]) || 0; });
+    });
+    parsed.prices.matrix = idMatrix;
+  }
+  // v2 (banhList/toppingList as {id,name} + prices.matrix[banhId][toppingId] = full bowl price):
+  // convert to base price per bánh + surcharge per topping, preserving existing numbers as closely as possible.
+  if(parsed.prices.matrix && parsed.banhList.length && parsed.banhList[0].price === undefined){
+    const matrix = parsed.prices.matrix;
+    parsed.banhList.forEach(b=>{
+      const row = matrix[b.id] || {};
+      const vals = parsed.toppingList.map(t=> row[t.id] || 0);
+      b.price = vals.length ? Math.min(...vals) : 0;
+    });
+    parsed.toppingList.forEach(t=>{
+      let sum=0, count=0;
+      parsed.banhList.forEach(b=>{
+        const row = matrix[b.id] || {};
+        sum += (row[t.id]||0) - b.price;
+        count++;
+      });
+      t.surcharge = count ? Math.max(0, Math.round((sum/count)/1000)*1000) : 0;
+    });
+    delete parsed.prices.matrix;
+  }
+  return parsed;
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    let parsed = JSON.parse(raw);
+    parsed = migrateState(parsed);
+    const def = defaultState();
+    // shallow-merge to survive schema upgrades
+    return Object.assign(def, parsed, {
+      prices: Object.assign(def.prices, parsed.prices || {})
+    });
+  }catch(e){ return defaultState(); }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function findBanh(id){ return state.banhList.find(b=>b.id===id); }
+function findTopping(id){ return state.toppingList.find(t=>t.id===id); }
+
+function getTable(id){
+  if(!state.tables[id]) state.tables[id] = { items: [] };
+  return state.tables[id];
+}
+function tableLabel(id){ return id === 'mangve' ? 'Mang về' : ('Bàn ' + id); }
+
+/* ============ NAVIGATION ============ */
+let currentView = 'tables';
+let currentTable = null;
+let currentPayMethod = 'Tiền mặt';
+let orderTab = 'banh';
+let selBanhId = null, selToppingIds = new Set(), selKhoNuoc = null, selNoteChips = new Set(), banhQty = 1;
+const KHO_NUOC_LIST = ["Khô","Nước"];
+const NOTE_CHIP_LIST = ["Không rau","Rau giá đầy đủ","Ít bánh","Nhiều bánh"];
+
+const VIEW_TITLES = {
+  tables: '🍜 Order Quán', order: '', payment: '💳 Thanh toán', history: '📋 Lịch sử hôm nay', settings: '⚙️ Cài đặt'
+};
+const NAV_IDS = { tables:'navTables', history:'navHistory', settings:'navSettings' };
+
+function goto(view){
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.bottomnav button').forEach(b=>b.classList.remove('active'));
+  const navBtn = document.getElementById(NAV_IDS[view]);
+  if(navBtn) navBtn.classList.add('active');
+
+  const backBtn = document.getElementById('backBtn');
+  if(view === 'order' || view === 'payment'){
+    backBtn.style.display = 'inline-block';
+    document.getElementById('topTitle').textContent = view === 'order' ? ('🧾 ' + tableLabel(currentTable)) : VIEW_TITLES.payment;
+  } else {
+    backBtn.style.display = 'none';
+    document.getElementById('topTitle').textContent = VIEW_TITLES[view];
+  }
+
+  if(view === 'tables') renderTables();
+  if(view === 'order') renderOrderView();
+  if(view === 'payment') renderPayment();
+  if(view === 'history') renderHistory();
+  if(view === 'settings') renderSettings();
+}
+document.getElementById('backBtn').onclick = function(){
+  if(currentView === 'payment'){ goto('order'); }
+  else { goto('tables'); }
+};
+
+/* ============ TABLES VIEW ============ */
+function priceIsUnset(){
+  const anyBanhPriced = state.banhList.some(b => b.price > 0);
+  const anyDrinkPriced = state.prices.drinks.some(d => d.price > 0);
+  return !anyBanhPriced && !anyDrinkPriced;
+}
+
+function renderTables(){
+  document.getElementById('priceWarnBanner').style.display = priceIsUnset() ? 'block' : 'none';
+  const grid = document.getElementById('tablesGrid');
+  grid.innerHTML = '';
+  const mangveDiv = tableCardHTML('mangve');
+  grid.insertAdjacentHTML('beforeend', mangveDiv);
+  for(let i=1;i<=state.numTables;i++){
+    grid.insertAdjacentHTML('beforeend', tableCardHTML(String(i)));
+  }
+}
+function tableCardHTML(id){
+  const t = state.tables[id];
+  const busy = t && t.items && t.items.length > 0;
+  const total = busy ? calcTotal(t.items) : 0;
+  const cls = 'table-card' + (busy?' busy':'') + (id==='mangve' ? ' takeaway-card' : '');
+  return `<div class="${cls}" onclick="openTable('${id}')">
+    <div>${tableLabel(id)}</div>
+    <div class="sub">${busy ? fmt(total)+' đ' : 'Trống'}</div>
+  </div>`;
+}
+function openTable(id){
+  currentTable = id;
+  selBanhId = null; selToppingIds = new Set(); selKhoNuoc = null; selNoteChips = new Set(); banhQty = 1;
+  orderTab = 'banh';
+  goto('order');
+}
+
+/* ============ ORDER VIEW ============ */
+function switchOrderTab(tab){
+  orderTab = tab;
+  document.getElementById('tabBanhBtn').classList.toggle('active', tab==='banh');
+  document.getElementById('tabDrinkBtn').classList.toggle('active', tab==='drink');
+  document.getElementById('panelBanh').style.display = tab==='banh' ? 'block' : 'none';
+  document.getElementById('panelDrink').style.display = tab==='drink' ? 'block' : 'none';
+}
+function renderOrderView(){
+  document.getElementById('orderTableName').textContent = tableLabel(currentTable);
+  switchOrderTab(orderTab);
+
+  const banhBox = document.getElementById('banhOptions');
+  banhBox.innerHTML = state.banhList.map(b=>
+    `<div class="opt ${selBanhId===b.id?'sel':''}" onclick="pickBanh('${b.id}')">${escapeHtml(b.name)}<span class="price">${fmt(b.price)} đ</span></div>`
+  ).join('');
+
+  const topBox = document.getElementById('toppingOptions');
+  topBox.innerHTML = state.toppingList.map(t=>{
+    const sel = selToppingIds.has(t.id);
+    const label = t.surcharge>0 ? '+'+fmt(t.surcharge)+' đ' : 'Không phụ thu';
+    return `<div class="opt ${sel?'sel':''}" onclick="toggleTopping('${t.id}')">${escapeHtml(t.name)}<span class="price">${label}</span></div>`;
+  }).join('');
+
+  const khoNuocBox = document.getElementById('khoNuocOptions');
+  khoNuocBox.innerHTML = KHO_NUOC_LIST.map(k=>
+    `<div class="opt ${selKhoNuoc===k?'sel':''}" onclick="pickKhoNuoc('${k}')">${k}</div>`
+  ).join('');
+
+  const noteBox = document.getElementById('noteChipsOptions');
+  noteBox.innerHTML = NOTE_CHIP_LIST.map(n=>{
+    const sel = selNoteChips.has(n);
+    return `<div class="opt ${sel?'sel':''}" onclick="toggleNoteChip('${n.replace(/'/g,"\\'")}')">${n}</div>`;
+  }).join('');
+
+  document.getElementById('banhQty').textContent = banhQty;
+
+  const drinkBox = document.getElementById('drinkList');
+  drinkBox.innerHTML = state.prices.drinks.map((d,i)=>`
+    <div class="drink-row">
+      <div><div class="name">${d.name}</div><div class="price">${fmt(d.price)} đ</div></div>
+      <div class="stepper">
+        <button onclick="addDrinkToOrder('${d.name.replace(/'/g,"\\'")}',${d.price})">+ Thêm</button>
+      </div>
+    </div>`).join('');
+
+  renderOrderItems();
+}
+function pickBanh(id){ selBanhId = id; renderOrderView(); }
+function toggleTopping(id){ selToppingIds.has(id) ? selToppingIds.delete(id) : selToppingIds.add(id); renderOrderView(); }
+function pickKhoNuoc(k){ selKhoNuoc = k; renderOrderView(); }
+function toggleNoteChip(n){ selNoteChips.has(n) ? selNoteChips.delete(n) : selNoteChips.add(n); renderOrderView(); }
+function changeQty(delta){ banhQty = Math.max(1, banhQty + delta); document.getElementById('banhQty').textContent = banhQty; }
+
+function addBanhToOrder(){
+  if(!selBanhId || !selKhoNuoc){ showToast('Chọn bánh và khô/nước trước đã'); return; }
+  const banhObj = findBanh(selBanhId);
+  if(!banhObj){ showToast('Loại bánh không còn tồn tại, chọn lại'); selBanhId=null; renderOrderView(); return; }
+  const toppingObjs = Array.from(selToppingIds).map(findTopping).filter(Boolean);
+  const surchargeSum = toppingObjs.reduce((s,t)=> s + (t.surcharge||0), 0);
+  const unitPrice = (banhObj.price||0) + surchargeSum;
+  const toppingNames = toppingObjs.map(t=>t.name).join(', ');
+  const freeText = document.getElementById('noteFreeText').value.trim();
+  const noteParts = Array.from(selNoteChips);
+  if(freeText) noteParts.push(freeText);
+  const note = noteParts.join(', ');
+  const name = banhObj.name + ' ' + selKhoNuoc + (toppingNames ? ' - ' + toppingNames : '');
+  const t = getTable(currentTable);
+  t.items.push({
+    kind:'mon', name, category:'Thu - ' + banhObj.name,
+    khoNuoc: selKhoNuoc, toppingNames, note, qty: banhQty, unitPrice
+  });
+  saveState();
+  selBanhId = null; selToppingIds = new Set(); selKhoNuoc = null; selNoteChips = new Set(); banhQty = 1;
+  document.getElementById('noteFreeText').value = '';
+  renderOrderView();
+  showToast('Đã thêm vào đơn');
+}
+function addDrinkToOrder(name, price){
+  const t = getTable(currentTable);
+  const existing = t.items.find(it => it.kind==='drink' && it.name===name);
+  if(existing){ existing.qty += 1; }
+  else { t.items.push({ kind:'drink', name, category:'Thu - Nước uống/Cà phê', qty:1, unitPrice: price }); }
+  saveState();
+  renderOrderItems();
+  showToast(name + ' +1');
+}
+function renderOrderItems(){
+  const t = getTable(currentTable);
+  const body = document.getElementById('orderItemsBody');
+  body.innerHTML = t.items.map((it,idx)=>`
+    <tr>
+      <td>${escapeHtml(it.name)}${it.note?`<br><span style="color:var(--ink-soft);font-size:10.5px;">Ghi chú: ${escapeHtml(it.note)}</span>`:''}</td>
+      <td>${it.qty}</td>
+      <td class="num">${fmt(it.qty*it.unitPrice)}</td>
+      <td class="del" onclick="removeItem(${idx})">✕</td>
+    </tr>`).join('');
+  document.getElementById('orderEmptyHint').style.display = t.items.length ? 'none' : 'block';
+  const total = calcTotal(t.items);
+  document.getElementById('orderTotal').textContent = fmt(total) + ' đ';
+  document.getElementById('goPaymentBtn').disabled = t.items.length === 0;
+}
+function removeItem(idx){
+  const t = getTable(currentTable);
+  t.items.splice(idx,1);
+  saveState();
+  renderOrderItems();
+}
+function calcTotal(items){ return items.reduce((s,it)=> s + it.qty*it.unitPrice, 0); }
+
+/* ============ PAYMENT VIEW ============ */
+function setPayMethod(m){
+  currentPayMethod = m;
+  document.getElementById('payCashBtn').classList.toggle('sel', m==='Tiền mặt');
+  document.getElementById('payBankBtn').classList.toggle('sel', m==='Chuyển khoản');
+}
+function renderPayment(){
+  setPayMethod(currentPayMethod);
+  const t = getTable(currentTable);
+  const total = calcTotal(t.items);
+  const now = new Date();
+  const rows = t.items.map(it=>
+    `<div class="b-row"><span>${escapeHtml(it.name)}${it.note?' ('+escapeHtml(it.note)+')':''} x${it.qty}</span><span>${fmt(it.qty*it.unitPrice)}</span></div>`
+  ).join('');
+  document.getElementById('billPreview').innerHTML = `
+    <div class="b-center b-title">${escapeHtml(state.shopName)}</div>
+    <div class="b-center">${tableLabel(currentTable)}</div>
+    <div class="b-center">${formatDateTime(now)}</div>
+    <hr>
+    ${rows}
+    <hr>
+    <div class="b-row b-total"><span>TỔNG CỘNG</span><span>${fmt(total)} đ</span></div>
+    <div class="b-center" style="margin-top:8px;">Cảm ơn quý khách!</div>
+  `;
+}
+function printBill(){
+  document.getElementById('printArea').innerHTML = document.getElementById('billPreview').innerHTML;
+  window.print();
+}
+function confirmPayment(){
+  const t = getTable(currentTable);
+  if(t.items.length === 0){ showToast('Đơn trống'); return; }
+  const total = calcTotal(t.items);
+  state.history.push({
+    id: 'DH' + Date.now(),
+    table: tableLabel(currentTable),
+    items: t.items.map(it=>({...it})),
+    total,
+    payMethod: currentPayMethod,
+    ts: Date.now()
+  });
+  state.tables[currentTable] = { items: [] };
+  saveState();
+  showToast('Đã lưu đơn — Bàn đã trống');
+  goto('tables');
+}
+
+/* ============ HISTORY VIEW ============ */
+function isToday(ts){
+  const d = new Date(ts), n = new Date();
+  return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate();
+}
+function renderHistory(){
+  const todays = state.history.filter(h=>isToday(h.ts)).sort((a,b)=>b.ts-a.ts);
+  document.getElementById('statCount').textContent = todays.length;
+  document.getElementById('statRevenue').textContent = fmt(todays.reduce((s,h)=>s+h.total,0)) + ' đ';
+  const list = document.getElementById('historyList');
+  list.innerHTML = todays.map(h=>`
+    <div class="history-item">
+      <div class="h-top"><span>${h.table} — ${h.items.reduce((s,i)=>s+i.qty,0)} món</span><span>${fmt(h.total)} đ</span></div>
+      <div class="h-sub">${formatDateTime(new Date(h.ts))} · ${h.payMethod}</div>
+    </div>`).join('');
+  document.getElementById('historyEmptyHint').style.display = todays.length ? 'none' : 'block';
+}
+function exportCSV(){
+  const todays = state.history.filter(h=>isToday(h.ts));
+  if(todays.length===0){ showToast('Chưa có đơn nào hôm nay'); return; }
+  let csv = 'Ngày,Hạng mục,Diễn giải,Số tiền,PT thanh toán,Ghi chú\n';
+  todays.forEach(h=>{
+    const dateStr = formatDateForCSV(new Date(h.ts));
+    h.items.forEach(it=>{
+      const amount = it.qty*it.unitPrice;
+      const desc = `${it.name} x${it.qty}`;
+      const note = h.table + ' - ' + h.id + (it.note ? ' | ' + it.note : '');
+      csv += [dateStr, it.category, csvEsc(desc), amount, h.payMethod, csvEsc(note)].join(',') + '\n';
+    });
+  });
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ThuChi_' + formatDateForCSV(new Date()).replace(/\//g,'-') + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Đã xuất file CSV');
+}
+function csvEsc(s){ return '"' + String(s).replace(/"/g,'""') + '"'; }
+
+/* ============ SETTINGS VIEW ============ */
+function renderSettings(){
+  document.getElementById('setShopName').value = state.shopName;
+  document.getElementById('setNumTables').value = state.numTables;
+
+  renderBanhTypeEditList();
+  renderToppingTypeEditList();
+  renderDrinkEditList();
+}
+function renderBanhTypeEditList(){
+  const box = document.getElementById('banhTypeEditList');
+  box.innerHTML = state.banhList.map(b=>`
+    <div class="drink-edit-row">
+      <input type="text" data-banh-name-id="${b.id}" value="${escapeAttr(b.name)}">
+      <input type="number" min="0" step="1000" data-banh-price-id="${b.id}" value="${b.price||0}">
+      <button onclick="removeBanhTypeRow('${b.id}')">✕</button>
+    </div>`).join('');
+}
+function renderToppingTypeEditList(){
+  const box = document.getElementById('toppingTypeEditList');
+  box.innerHTML = state.toppingList.map(t=>`
+    <div class="drink-edit-row">
+      <input type="text" data-topping-name-id="${t.id}" value="${escapeAttr(t.name)}">
+      <input type="number" min="0" step="1000" data-topping-surcharge-id="${t.id}" value="${t.surcharge||0}">
+      <button onclick="removeToppingTypeRow('${t.id}')">✕</button>
+    </div>`).join('');
+}
+function captureBanhToppingEdits(){
+  // capture any in-progress edits before add/remove re-renders wipe the inputs
+  document.querySelectorAll('[data-banh-name-id]').forEach(inp=>{
+    const b = findBanh(inp.getAttribute('data-banh-name-id'));
+    if(b) b.name = inp.value.trim() || b.name;
+  });
+  document.querySelectorAll('[data-banh-price-id]').forEach(inp=>{
+    const b = findBanh(inp.getAttribute('data-banh-price-id'));
+    if(b) b.price = Math.max(0, parseInt(inp.value) || 0);
+  });
+  document.querySelectorAll('[data-topping-name-id]').forEach(inp=>{
+    const t = findTopping(inp.getAttribute('data-topping-name-id'));
+    if(t) t.name = inp.value.trim() || t.name;
+  });
+  document.querySelectorAll('[data-topping-surcharge-id]').forEach(inp=>{
+    const t = findTopping(inp.getAttribute('data-topping-surcharge-id'));
+    if(t) t.surcharge = Math.max(0, parseInt(inp.value) || 0);
+  });
+}
+function addBanhTypeRow(){
+  captureBanhToppingEdits();
+  state.banhList.push({id:newId('b'), name:'Bánh mới', price:0});
+  renderBanhTypeEditList();
+}
+function removeBanhTypeRow(id){
+  if(state.banhList.length <= 1){ showToast('Cần giữ ít nhất 1 loại bánh'); return; }
+  captureBanhToppingEdits();
+  state.banhList = state.banhList.filter(b=>b.id!==id);
+  renderBanhTypeEditList();
+}
+function addToppingTypeRow(){
+  captureBanhToppingEdits();
+  state.toppingList.push({id:newId('t'), name:'Topping mới', surcharge:0});
+  renderToppingTypeEditList();
+}
+function removeToppingTypeRow(id){
+  if(state.toppingList.length <= 1){ showToast('Cần giữ ít nhất 1 loại topping'); return; }
+  captureBanhToppingEdits();
+  state.toppingList = state.toppingList.filter(t=>t.id!==id);
+  renderToppingTypeEditList();
+}
+function renderDrinkEditList(){
+  const box = document.getElementById('drinkEditList');
+  box.innerHTML = state.prices.drinks.map((d,i)=>`
+    <div class="drink-edit-row">
+      <input type="text" data-drink-name="${i}" value="${escapeAttr(d.name)}">
+      <input type="number" min="0" step="1000" data-drink-price="${i}" value="${d.price}">
+      <button onclick="removeDrinkRow(${i})">✕</button>
+    </div>`).join('');
+}
+function addDrinkRow(){
+  state.prices.drinks.push({name:'Món mới', price:0});
+  renderDrinkEditList();
+}
+function removeDrinkRow(i){
+  state.prices.drinks.splice(i,1);
+  renderDrinkEditList();
+}
+function saveSettings(){
+  state.shopName = document.getElementById('setShopName').value.trim() || 'Quán Hủ Tiếu';
+  state.numTables = Math.max(1, Math.min(30, parseInt(document.getElementById('setNumTables').value) || 8));
+
+  captureBanhToppingEdits();
+
+  document.querySelectorAll('[data-drink-name]').forEach(inp=>{
+    const i = inp.getAttribute('data-drink-name');
+    state.prices.drinks[i].name = inp.value.trim() || ('Món ' + (parseInt(i)+1));
+  });
+  document.querySelectorAll('[data-drink-price]').forEach(inp=>{
+    const i = inp.getAttribute('data-drink-price');
+    state.prices.drinks[i].price = Math.max(0, parseInt(inp.value) || 0);
+  });
+  saveState();
+  showToast('Đã lưu cài đặt');
+  goto('tables');
+}
+function resetAllData(){
+  if(confirm('Xoá toàn bộ dữ liệu (giá, bàn, lịch sử) và làm lại từ đầu?')){
+    state = defaultState();
+    saveState();
+    goto('settings');
+    showToast('Đã xoá dữ liệu');
+  }
+}
+
+/* ============ HELPERS ============ */
+function fmt(n){ return Math.round(n).toLocaleString('vi-VN'); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function formatDateTime(d){ return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function formatDateForCSV(d){ return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`; }
+let toastTimer;
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 1800);
+}
+
+/* ============ INIT ============ */
+goto('tables');
+</script>
+</body>
+</html>
