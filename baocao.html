@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Báo cáo — Quán Hủ Tiếu</title>
+<style>
+  :root{
+    --cream:#FFF8EE;
+    --paper:#FFFFFF;
+    --ink:#3A2618;
+    --ink-soft:#6B4F3B;
+    --terracotta:#C4502A;
+    --terracotta-dark:#9C3D1F;
+    --gold:#D99A3D;
+    --line:#E8D9C4;
+    --green:#2E7D32;
+    --red:#C62828;
+    --bg:#EDE2CF;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family:'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  header.topbar{
+    background:var(--terracotta);
+    color:#fff;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky; top:0; z-index:20;
+    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+  }
+  header.topbar .title{ font-size:17px; font-weight:800; letter-spacing:0.5px; display:flex; align-items:center; gap:8px;}
+  .top-right{ display:flex; align-items:center; gap:8px; }
+  header.topbar a.homelink{
+    background:rgba(255,255,255,0.18); border:none; color:#fff; text-decoration:none;
+    padding:8px 10px; border-radius:8px; font-size:13px; font-weight:600;
+  }
+  .logout-btn{
+    background:rgba(255,255,255,0.18); border:none; color:#fff;
+    padding:8px 10px; border-radius:8px; font-size:13px; font-weight:600;
+  }
+  main{ flex:1; padding:12px 14px 90px; max-width:720px; margin:0 auto; width:100%; }
+  nav.bottomnav{
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--paper); border-top:1px solid var(--line);
+    display:flex; z-index:20;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.08);
+  }
+  nav.bottomnav button{
+    flex:1; background:none; border:none; padding:9px 2px 7px;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    color:var(--ink-soft); font-size:10.5px; font-weight:600;
+  }
+  nav.bottomnav button .ic{ font-size:19px; }
+  nav.bottomnav button.active{ color:var(--terracotta-dark); }
+
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  /* filter bar */
+  .filterbar{
+    background:var(--paper); border:1px solid var(--line); border-radius:12px;
+    padding:10px 12px; margin-bottom:14px;
+  }
+  .filterbar .flabel{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--terracotta-dark); margin-bottom:6px; }
+  .preset-row{ display:flex; gap:6px; overflow-x:auto; margin-bottom:8px; }
+  .preset-row button{
+    flex:0 0 auto; padding:6px 11px; border-radius:999px; border:1px solid var(--line);
+    background:var(--paper); font-weight:700; font-size:12px; color:var(--ink-soft); white-space:nowrap;
+  }
+  .preset-row button.active{ background:var(--terracotta); color:#fff; border-color:var(--terracotta); }
+  .range-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .range-row input[type=date]{
+    flex:1; min-width:120px; padding:8px; border:1px solid var(--line); border-radius:8px; font-size:13px;
+    background:var(--paper); color:var(--ink); font-family:inherit;
+  }
+  .range-row .dash{ color:var(--ink-soft); font-size:13px; }
+  .range-row button{
+    padding:8px 12px; border-radius:8px; border:none; background:var(--terracotta); color:#fff; font-weight:700; font-size:13px;
+  }
+  .range-label{ font-size:11.5px; color:var(--ink-soft); margin-top:6px; }
+
+  .section-title{
+    font-size:13px; letter-spacing:1px; text-transform:uppercase; font-weight:800;
+    color:var(--terracotta-dark); margin:16px 0 8px; display:flex; align-items:center; gap:6px;
+  }
+  .section-title:first-child{ margin-top:0; }
+  .banner{
+    background:#FCEFD0; border:1px solid var(--gold); border-radius:10px;
+    padding:10px 12px; font-size:12px; color:var(--ink-soft); margin-bottom:12px; line-height:1.5;
+  }
+
+  .card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:14px; }
+
+  .stat-row{ display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .stat-box{
+    flex:1; min-width:90px; background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    padding:12px 8px; text-align:center;
+  }
+  .stat-box .v{ font-size:16px; font-weight:800; color:var(--terracotta-dark); }
+  .stat-box .v.pos{ color:var(--green); }
+  .stat-box .v.neg{ color:var(--red); }
+  .stat-box .l{ font-size:10.5px; color:var(--ink-soft); margin-top:2px; }
+
+  table.rp{ width:100%; border-collapse:collapse; margin-top:4px; }
+  table.rp th, table.rp td{ padding:7px 6px; font-size:12px; border-bottom:1px solid var(--line); text-align:right; }
+  table.rp th:first-child, table.rp td:first-child{ text-align:left; }
+  table.rp th{ color:var(--ink-soft); font-size:10.5px; text-transform:uppercase; }
+  table.rp td.pos{ color:var(--green); font-weight:700; }
+  table.rp td.neg{ color:var(--red); font-weight:700; }
+  table.rp tr.total-row td{ font-weight:800; border-top:2px solid var(--line); border-bottom:none; }
+  table.rp .rank{ display:inline-block; min-width:20px; font-weight:800; color:var(--terracotta); }
+
+  .bar-row{ margin-bottom:8px; }
+  .bar-row .b-top{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px; gap:8px; }
+  .bar-row .b-track{ background:var(--line); border-radius:6px; height:9px; overflow:hidden; }
+  .bar-row .b-fill{ height:100%; border-radius:6px; background:var(--terracotta); }
+  .bar-row .b-fill.chi{ background:var(--red); }
+
+  .empty-hint{ text-align:center; color:var(--ink-soft); font-size:13px; padding:22px 10px; }
+
+  .btn{
+    display:block; width:100%; padding:12px; border:none; border-radius:10px;
+    font-size:14px; font-weight:800; letter-spacing:0.3px; background:var(--terracotta); color:#fff; margin-top:6px;
+  }
+  .btn.secondary{ background:var(--paper); color:var(--terracotta-dark); border:2px solid var(--terracotta); }
+  .btn.ghost{ background:none; color:var(--ink-soft); border:1px solid var(--line); }
+  .btn.small{ padding:8px 10px; font-size:12.5px; width:auto; }
+
+  /* inventory sub-tabs */
+  .subtab{ display:flex; gap:8px; margin-bottom:12px; }
+  .subtab button{
+    flex:1; padding:9px; border-radius:999px; border:1px solid var(--line);
+    background:var(--paper); font-weight:700; font-size:12.5px; color:var(--ink-soft);
+  }
+  .subtab button.active{ background:var(--terracotta); color:#fff; border-color:var(--terracotta); }
+  .subpanel{ display:none; }
+  .subpanel.active{ display:block; }
+
+  .field{ margin-bottom:12px; }
+  .field label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:4px; }
+  .field input, .field select{
+    width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:14px;
+    background:var(--paper); color:var(--ink); font-family:inherit;
+  }
+  .type-row{ display:flex; gap:10px; margin-bottom:12px; }
+  .type-row button{
+    flex:1; padding:11px; border-radius:10px; border:2px solid var(--line); background:var(--paper);
+    font-weight:700; font-size:13.5px; color:var(--ink-soft);
+  }
+  .type-row button.sel-nhap{ border-color:var(--green); color:var(--green); background:#EAF6EA; }
+  .type-row button.sel-xuat{ border-color:var(--red); color:var(--red); background:#FBEAEA; }
+
+  .txn-row{ display:flex; align-items:center; gap:8px; padding:8px 4px; border-bottom:1px dashed var(--line); }
+  .txn-row:last-child{ border-bottom:none; }
+  .txn-row .t-main{ flex:1; min-width:0; }
+  .txn-row .t-name{ font-size:13px; font-weight:700; }
+  .txn-row .t-sub{ font-size:11px; color:var(--ink-soft); }
+  .txn-row .t-qty{ font-size:13px; font-weight:800; white-space:nowrap; }
+  .txn-row .t-qty.nhap{ color:var(--green); }
+  .txn-row .t-qty.xuat{ color:var(--red); }
+  .txn-row .t-del{ color:var(--red); font-weight:800; font-size:15px; background:none; border:none; padding:2px 6px; }
+
+  .cat-edit-row{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .cat-edit-row input[type=text]{ flex:2; }
+  .cat-edit-row input[type=text].unit{ flex:1; }
+  .cat-edit-row button{ background:none; border:none; color:var(--red); font-size:18px; font-weight:800; }
+
+  .toast{
+    position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px;
+    font-size:13px; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s; max-width:90%; text-align:center;
+  }
+  .toast.show{ opacity:0.95; }
+
+  .auth-overlay{
+    position:fixed; inset:0; z-index:1000; display:flex;
+    align-items:center; justify-content:center; padding:20px; background:var(--bg);
+  }
+  .auth-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:16px;
+    padding:28px 22px; width:100%; max-width:340px; text-align:center;
+    box-shadow:0 8px 30px rgba(0,0,0,0.12);
+  }
+  .auth-logo{ font-size:44px; line-height:1; }
+  .auth-title{ font-size:20px; font-weight:800; color:var(--terracotta-dark); margin-top:6px; }
+  .auth-sub{ font-size:13px; color:var(--ink-soft); margin:6px 0 16px; line-height:1.5; }
+  .auth-card input{
+    width:100%; padding:13px; border:1px solid var(--line); border-radius:10px;
+    font-size:20px; text-align:center; letter-spacing:4px; background:var(--paper); color:var(--ink);
+  }
+  .auth-err{ color:var(--red); font-size:12.5px; min-height:16px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="title">📊 Báo cáo Quán</div>
+  <div class="top-right">
+    <a class="homelink" href="./index.html">🍜 Order</a>
+    <a class="homelink" href="./thuchi.html">📒 Thu Chi</a>
+    <button class="logout-btn" id="logoutBtn" onclick="logout()" title="Đăng xuất">🔒</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- SHARED FILTER -->
+  <div class="filterbar">
+    <div class="flabel">⏱️ Khoảng thời gian</div>
+    <div class="preset-row" id="presetRow"></div>
+    <div class="range-row">
+      <input type="date" id="fromDate">
+      <span class="dash">→</span>
+      <input type="date" id="toDate">
+      <button onclick="applyCustom()">Xem</button>
+    </div>
+    <div class="range-label" id="rangeLabel"></div>
+  </div>
+
+  <!-- VIEW: SALES -->
+  <section class="view active" id="view-sales">
+    <div class="section-title">💰 Doanh thu bán hàng (bán lẻ)</div>
+    <div class="stat-row" id="salesStatRow"></div>
+    <div class="section-title">Theo phương thức thanh toán</div>
+    <div class="card" id="salesPayBox"></div>
+    <div class="section-title">Doanh thu theo ngày</div>
+    <div class="card">
+      <table class="rp">
+        <thead><tr><th>Ngày</th><th>Số đơn</th><th>Doanh thu</th></tr></thead>
+        <tbody id="salesDayTable"></tbody>
+      </table>
+      <div id="salesEmpty" class="empty-hint" style="display:none;">Chưa có đơn bán nào trong khoảng này.</div>
+    </div>
+    <button class="btn secondary" onclick="exportSales()">⬇️ Xuất Excel (CSV) — chi tiết từng đơn</button>
+  </section>
+
+  <!-- VIEW: INVENTORY -->
+  <section class="view" id="view-inventory">
+    <div class="subtab">
+      <button id="invTabReport" class="active" onclick="invSub('report')">Báo cáo N-X-T</button>
+      <button id="invTabRecord" onclick="invSub('record')">Ghi Nhập/Xuất</button>
+      <button id="invTabCatalog" onclick="invSub('catalog')">Danh mục NVL</button>
+    </div>
+
+    <div class="subpanel active" id="invPanelReport">
+      <div class="section-title">📦 Nhập - Xuất - Tồn kho NVL</div>
+      <div class="banner">Tồn cuối kỳ = Tồn đầu kỳ + Nhập trong kỳ − Xuất trong kỳ. Đơn vị theo từng NVL đã khai ở "Danh mục NVL".</div>
+      <div class="card">
+        <table class="rp">
+          <thead><tr><th>Nguyên vật liệu</th><th>Tồn đầu</th><th>Nhập</th><th>Xuất</th><th>Tồn cuối</th></tr></thead>
+          <tbody id="invReportTable"></tbody>
+        </table>
+        <div id="invReportEmpty" class="empty-hint" style="display:none;">Chưa có NVL nào. Vào "Danh mục NVL" để thêm.</div>
+      </div>
+      <button class="btn secondary" onclick="exportInventory()">⬇️ Xuất Excel (CSV) — Nhập Xuất Tồn</button>
+    </div>
+
+    <div class="subpanel" id="invPanelRecord">
+      <div class="section-title">✍️ Ghi phiếu Nhập / Xuất kho</div>
+      <div class="card">
+        <div class="type-row">
+          <button id="invTypeNhapBtn" onclick="pickInvType('nhap')">📥 Nhập kho</button>
+          <button id="invTypeXuatBtn" onclick="pickInvType('xuat')">📤 Xuất kho</button>
+        </div>
+        <div class="field"><label>Nguyên vật liệu</label><select id="invMaterial"></select></div>
+        <div class="field"><label>Số lượng (<span id="invUnitHint">đơn vị</span>)</label><input type="number" id="invQty" placeholder="0" min="0" step="0.01"></div>
+        <div class="field" id="invPriceField"><label>Đơn giá (đ / đơn vị) — không bắt buộc</label><input type="number" id="invPrice" placeholder="0" min="0"></div>
+        <div class="field"><label>Ngày</label><input type="date" id="invDate"></div>
+        <div class="field"><label>Ghi chú (không bắt buộc)</label><input type="text" id="invNote" placeholder="VD: mua ở chợ đầu mối"></div>
+        <button class="btn" onclick="addInvTxn()">+ Lưu phiếu</button>
+      </div>
+      <div class="section-title">Phiếu gần đây</div>
+      <div id="invTxnList"></div>
+      <div id="invTxnEmpty" class="empty-hint" style="display:none;">Chưa có phiếu nhập/xuất nào.</div>
+    </div>
+
+    <div class="subpanel" id="invPanelCatalog">
+      <div class="section-title">🧺 Danh mục nguyên vật liệu</div>
+      <div class="banner">Đặt tên NVL và đơn vị tính (kg, bó, bình, phần...). Có thể sửa trực tiếp rồi bấm Lưu.</div>
+      <div id="matEditList"></div>
+      <button class="btn ghost small" onclick="addMatRow()">+ Thêm NVL</button>
+      <button class="btn" style="margin-top:14px;" onclick="saveMaterials()">💾 Lưu danh mục</button>
+    </div>
+  </section>
+
+  <!-- VIEW: P&L -->
+  <section class="view" id="view-pnl">
+    <div class="section-title">📈 Kết quả kinh doanh (Lãi / Lỗ)</div>
+    <div class="stat-row" id="pnlStatRow"></div>
+    <div class="banner">Doanh thu lấy từ các đơn đã bán trong App order. Chi phí lấy từ các khoản "Chi" trong App Thu Chi. (Không tính các khoản "Thu" ghi tay để tránh đếm trùng.)</div>
+    <div class="section-title">Chi phí theo hạng mục</div>
+    <div class="card" id="pnlChiBox"></div>
+    <button class="btn secondary" onclick="exportPnl()">⬇️ Xuất Excel (CSV) — Lãi/Lỗ</button>
+  </section>
+
+  <!-- VIEW: TOP -->
+  <section class="view" id="view-top">
+    <div class="section-title">🏆 Top các món bán chạy</div>
+    <div class="subtab">
+      <button id="topSortQty" class="active" onclick="setTopSort('qty')">Theo số lượng</button>
+      <button id="topSortRev" onclick="setTopSort('rev')">Theo doanh thu</button>
+    </div>
+    <div class="card" id="topBars"></div>
+    <div class="section-title">Bảng chi tiết</div>
+    <div class="card">
+      <table class="rp">
+        <thead><tr><th>#</th><th>Món</th><th>SL bán</th><th>Doanh thu</th></tr></thead>
+        <tbody id="topTable"></tbody>
+      </table>
+      <div id="topEmpty" class="empty-hint" style="display:none;">Chưa có món nào được bán trong khoảng này.</div>
+    </div>
+    <button class="btn secondary" onclick="exportTop()">⬇️ Xuất Excel (CSV) — Top món</button>
+  </section>
+
+</main>
+
+<nav class="bottomnav">
+  <button id="navSales" class="active" onclick="goto('sales')"><span class="ic">💰</span>Doanh thu</button>
+  <button id="navInventory" onclick="goto('inventory')"><span class="ic">📦</span>Kho NVL</button>
+  <button id="navPnl" onclick="goto('pnl')"><span class="ic">📈</span>Lãi/Lỗ</button>
+  <button id="navTop" onclick="goto('top')"><span class="ic">🏆</span>Top món</button>
+</nav>
+
+<div class="auth-overlay" id="authOverlay" style="display:flex;">
+  <div class="auth-card">
+    <div id="authLoginBox">
+      <div class="auth-logo">📊</div>
+      <div class="auth-title">Báo cáo Quán</div>
+      <div class="auth-sub">Nhập mật khẩu để vào</div>
+      <input type="password" id="authPin" inputmode="numeric" placeholder="Mật khẩu" maxlength="12" onkeydown="if(event.key==='Enter')tryLogin()">
+      <button class="btn" onclick="tryLogin()">Đăng nhập</button>
+      <div class="auth-err" id="authErr"></div>
+    </div>
+    <div id="authBlockedBox" style="display:none;">
+      <div class="auth-logo">🔒</div>
+      <div class="auth-title">Chỉ dành cho Admin</div>
+      <div class="auth-sub">Tài khoản Nhân viên không xem được Báo cáo. Vui lòng đăng nhập bằng tài khoản Admin.</div>
+      <button class="btn" onclick="logout()">Đăng nhập tài khoản khác</button>
+      <a class="btn ghost" href="./index.html" style="text-decoration:none;text-align:center;display:block;margin-top:8px;">Về App order</a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ EXTERNAL DATA SOURCES (same origin, read-only) ============ */
+const ORDER_KEY = 'huTieuPOS_v1';
+const THUCHI_KEY = 'thuChiPOS_v1';
+const INV_KEY = 'khoNVL_v1';
+
+function loadOrderHistory(){
+  try{ const s = JSON.parse(localStorage.getItem(ORDER_KEY)); return (s && Array.isArray(s.history)) ? s.history : []; }
+  catch(e){ return []; }
+}
+function loadThuChiEntries(){
+  try{ const s = JSON.parse(localStorage.getItem(THUCHI_KEY)); return (s && Array.isArray(s.entries)) ? s.entries : []; }
+  catch(e){ return []; }
+}
+
+/* ============ INVENTORY STATE (own store) ============ */
+function newId(p){ return p + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function defaultInventory(){
+  const names = [
+    ['Thịt heo','kg'],['Xương ống','kg'],['Sợi hủ tiếu','kg'],['Mì tươi','kg'],
+    ['Rau & giá','kg'],['Hành, ngò','kg'],['Gia vị','phần'],['Gas','bình']
+  ];
+  return { materials: names.map(n=>({id:newId('m'), name:n[0], unit:n[1]})), txns: [] };
+}
+function loadInventory(){
+  try{
+    const raw = localStorage.getItem(INV_KEY);
+    if(!raw) return defaultInventory();
+    const p = JSON.parse(raw);
+    return { materials: Array.isArray(p.materials)&&p.materials.length ? p.materials : defaultInventory().materials,
+             txns: Array.isArray(p.txns) ? p.txns : [] };
+  }catch(e){ return defaultInventory(); }
+}
+function saveInventory(){ localStorage.setItem(INV_KEY, JSON.stringify(inv)); }
+let inv = loadInventory();
+function findMat(id){ return inv.materials.find(m=>m.id===id); }
+
+/* ============ HELPERS ============ */
+function fmt(n){ return Math.round(n||0).toLocaleString('vi-VN'); }
+function qfmt(n){ return (Math.round((n||0)*1000)/1000).toLocaleString('vi-VN'); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function toISO(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function todayISO(){ return toISO(new Date()); }
+function isoToDisplay(iso){ const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+function csvEsc(s){ return '"' + String(s).replace(/"/g,'""') + '"'; }
+function showToast(msg){
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__tt); window.__tt = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function downloadCSV(filename, csv){
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Đã xuất file Excel (CSV)');
+}
+
+/* ============ DATE FILTER ============ */
+let filterMode = 'month';
+let fromISO = todayISO().slice(0,8)+'01';
+let toISOv = todayISO();
+
+function presets(){
+  return [
+    {k:'today', l:'Hôm nay'}, {k:'7d', l:'7 ngày'}, {k:'30d', l:'30 ngày'},
+    {k:'month', l:'Tháng này'}, {k:'all', l:'Tất cả'}
+  ];
+}
+function computeRange(mode){
+  const now = new Date();
+  const t = todayISO();
+  if(mode==='today') return {from:t, to:t};
+  if(mode==='7d'){ const d=new Date(); d.setDate(d.getDate()-6); return {from:toISO(d), to:t}; }
+  if(mode==='30d'){ const d=new Date(); d.setDate(d.getDate()-29); return {from:toISO(d), to:t}; }
+  if(mode==='month'){ return {from:`${now.getFullYear()}-${pad2(now.getMonth()+1)}-01`, to:t}; }
+  if(mode==='all'){ return {from:null, to:t}; }
+  return {from:fromISO, to:toISOv};
+}
+function setPreset(mode){
+  filterMode = mode;
+  const r = computeRange(mode);
+  fromISO = r.from; toISOv = r.to;
+  document.getElementById('fromDate').value = r.from || '';
+  document.getElementById('toDate').value = r.to || '';
+  renderFilterUI();
+  renderCurrent();
+}
+function applyCustom(){
+  const f = document.getElementById('fromDate').value;
+  const tt = document.getElementById('toDate').value;
+  if(!f || !tt){ showToast('Chọn đủ Từ ngày và Đến ngày'); return; }
+  if(f > tt){ showToast('Từ ngày phải trước Đến ngày'); return; }
+  filterMode = 'custom'; fromISO = f; toISOv = tt;
+  renderFilterUI();
+  renderCurrent();
+}
+function renderFilterUI(){
+  document.getElementById('presetRow').innerHTML = presets().map(p=>
+    `<button class="${filterMode===p.k?'active':''}" onclick="setPreset('${p.k}')">${p.l}</button>`
+  ).join('');
+  const lbl = fromISO ? `Từ ${isoToDisplay(fromISO)} đến ${isoToDisplay(toISOv)}` : `Toàn bộ (đến ${isoToDisplay(toISOv)})`;
+  document.getElementById('rangeLabel').textContent = lbl;
+}
+function startTs(){ return fromISO ? new Date(fromISO+'T00:00:00').getTime() : -Infinity; }
+function endTs(){ return new Date(toISOv+'T23:59:59.999').getTime(); }
+function inRangeISO(iso){ if(!iso) return false; if(fromISO && iso < fromISO) return false; if(iso > toISOv) return false; return true; }
+function inRangeTs(ts){ return ts >= startTs() && ts <= endTs(); }
+
+/* ============ NAVIGATION ============ */
+let currentView = 'sales';
+const NAV = { sales:'navSales', inventory:'navInventory', pnl:'navPnl', top:'navTop' };
+function goto(view){
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.bottomnav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(NAV[view]).classList.add('active');
+  renderCurrent();
+}
+function renderCurrent(){
+  if(currentView==='sales') renderSales();
+  else if(currentView==='inventory') renderInventory();
+  else if(currentView==='pnl') renderPnl();
+  else if(currentView==='top') renderTop();
+}
+
+/* ============ 1) SALES REPORT ============ */
+function salesInRange(){ return loadOrderHistory().filter(h=> inRangeTs(h.ts)); }
+function renderSales(){
+  const orders = salesInRange();
+  const totalRev = orders.reduce((s,o)=> s + (o.total||0), 0);
+  const count = orders.length;
+  const avg = count ? totalRev/count : 0;
+  document.getElementById('salesStatRow').innerHTML = `
+    <div class="stat-box"><div class="v">${fmt(totalRev)} đ</div><div class="l">Tổng doanh thu</div></div>
+    <div class="stat-box"><div class="v">${fmt(count)}</div><div class="l">Số đơn</div></div>
+    <div class="stat-box"><div class="v">${fmt(avg)} đ</div><div class="l">TB / đơn</div></div>`;
+
+  const byPay = {};
+  orders.forEach(o=>{ const p=o.payMethod||'Khác'; byPay[p]=(byPay[p]||0)+(o.total||0); });
+  const payKeys = Object.keys(byPay);
+  document.getElementById('salesPayBox').innerHTML = payKeys.length
+    ? payKeys.map(p=>{
+        const pct = totalRev ? Math.round(byPay[p]/totalRev*100) : 0;
+        return `<div class="bar-row"><div class="b-top"><span>${escapeHtml(p)}</span><span>${fmt(byPay[p])} đ (${pct}%)</span></div>
+          <div class="b-track"><div class="b-fill" style="width:${Math.max(2,pct)}%;"></div></div></div>`;
+      }).join('')
+    : '<div class="empty-hint">Chưa có dữ liệu.</div>';
+
+  const byDay = {};
+  orders.forEach(o=>{ const iso=toISO(new Date(o.ts)); (byDay[iso]=byDay[iso]||{c:0,r:0}); byDay[iso].c++; byDay[iso].r+=(o.total||0); });
+  const days = Object.keys(byDay).sort((a,b)=> b.localeCompare(a));
+  document.getElementById('salesDayTable').innerHTML = days.map(d=>
+    `<tr><td>${isoToDisplay(d)}</td><td>${fmt(byDay[d].c)}</td><td>${fmt(byDay[d].r)}</td></tr>`
+  ).join('') + (days.length ? `<tr class="total-row"><td>TỔNG</td><td>${fmt(count)}</td><td>${fmt(totalRev)}</td></tr>` : '');
+  document.getElementById('salesEmpty').style.display = days.length ? 'none' : 'block';
+}
+function exportSales(){
+  const orders = salesInRange().slice().sort((a,b)=>a.ts-b.ts);
+  if(!orders.length){ showToast('Không có đơn nào trong khoảng này'); return; }
+  let csv = 'Ngày,Giờ,Bàn,Số món,Tổng tiền,Phương thức\n';
+  orders.forEach(o=>{
+    const d = new Date(o.ts);
+    const dateStr = `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`;
+    const timeStr = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    const numItems = (o.items||[]).reduce((s,i)=>s+(i.qty||0),0);
+    csv += [dateStr, timeStr, csvEsc(o.table||''), numItems, o.total||0, csvEsc(o.payMethod||'')].join(',') + '\n';
+  });
+  downloadCSV('DoanhThu_'+(fromISO||'all')+'_'+toISOv+'.csv', csv);
+}
+
+/* ============ 2) INVENTORY ============ */
+let invSubTab = 'report';
+let selInvType = 'nhap';
+function invSub(tab){
+  invSubTab = tab;
+  document.getElementById('invTabReport').classList.toggle('active', tab==='report');
+  document.getElementById('invTabRecord').classList.toggle('active', tab==='record');
+  document.getElementById('invTabCatalog').classList.toggle('active', tab==='catalog');
+  document.getElementById('invPanelReport').classList.toggle('active', tab==='report');
+  document.getElementById('invPanelRecord').classList.toggle('active', tab==='record');
+  document.getElementById('invPanelCatalog').classList.toggle('active', tab==='catalog');
+  if(tab==='report') renderInvReport();
+  if(tab==='record') renderInvRecord();
+  if(tab==='catalog') renderMatEditList();
+}
+function renderInventory(){ invSub(invSubTab); }
+
+function invMaterialTotals(){
+  // returns map materialId -> {before:{nhap,xuat}, inr:{nhap,xuat}}
+  const map = {};
+  inv.materials.forEach(m=> map[m.id] = {bNhap:0,bXuat:0,rNhap:0,rXuat:0});
+  inv.txns.forEach(tx=>{
+    if(!map[tx.materialId]) return;
+    const before = fromISO ? (tx.date < fromISO) : false;
+    const inr = inRangeISO(tx.date);
+    if(before){ if(tx.type==='nhap') map[tx.materialId].bNhap += (tx.qty||0); else map[tx.materialId].bXuat += (tx.qty||0); }
+    if(inr){ if(tx.type==='nhap') map[tx.materialId].rNhap += (tx.qty||0); else map[tx.materialId].rXuat += (tx.qty||0); }
+  });
+  return map;
+}
+function renderInvReport(){
+  const map = invMaterialTotals();
+  const rows = inv.materials.map(m=>{
+    const t = map[m.id];
+    const open = t.bNhap - t.bXuat;
+    const close = open + t.rNhap - t.rXuat;
+    return `<tr>
+      <td>${escapeHtml(m.name)} <span style="color:var(--ink-soft);font-size:10px;">(${escapeHtml(m.unit)})</span></td>
+      <td>${qfmt(open)}</td><td class="pos">${qfmt(t.rNhap)}</td><td class="neg">${qfmt(t.rXuat)}</td>
+      <td><b>${qfmt(close)}</b></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('invReportTable').innerHTML = rows;
+  document.getElementById('invReportEmpty').style.display = inv.materials.length ? 'none' : 'block';
+}
+function pickInvType(t){
+  selInvType = t;
+  document.getElementById('invTypeNhapBtn').classList.toggle('sel-nhap', t==='nhap');
+  document.getElementById('invTypeXuatBtn').classList.toggle('sel-xuat', t==='xuat');
+  document.getElementById('invPriceField').style.display = t==='nhap' ? 'block' : 'none';
+}
+function renderInvRecord(){
+  const sel = document.getElementById('invMaterial');
+  sel.innerHTML = inv.materials.map(m=>`<option value="${m.id}">${escapeHtml(m.name)} (${escapeHtml(m.unit)})</option>`).join('');
+  updateUnitHint();
+  sel.onchange = updateUnitHint;
+  document.getElementById('invDate').value = todayISO();
+  pickInvType(selInvType);
+  renderTxnList();
+}
+function updateUnitHint(){
+  const m = findMat(document.getElementById('invMaterial').value);
+  document.getElementById('invUnitHint').textContent = m ? m.unit : 'đơn vị';
+}
+function addInvTxn(){
+  const materialId = document.getElementById('invMaterial').value;
+  const qty = parseFloat(document.getElementById('invQty').value) || 0;
+  const price = parseFloat(document.getElementById('invPrice').value) || 0;
+  const date = document.getElementById('invDate').value || todayISO();
+  const note = document.getElementById('invNote').value.trim();
+  if(!materialId){ showToast('Chưa có NVL nào, thêm ở Danh mục NVL'); return; }
+  if(qty <= 0){ showToast('Nhập số lượng lớn hơn 0'); return; }
+  inv.txns.push({ id:newId('x'), date, materialId, type:selInvType, qty, unitPrice: selInvType==='nhap'?price:0, note, ts:Date.now() });
+  saveInventory();
+  document.getElementById('invQty').value=''; document.getElementById('invPrice').value=''; document.getElementById('invNote').value='';
+  showToast(selInvType==='nhap' ? 'Đã lưu phiếu nhập' : 'Đã lưu phiếu xuất');
+  renderTxnList();
+}
+function removeTxn(id){ inv.txns = inv.txns.filter(t=>t.id!==id); saveInventory(); renderTxnList(); }
+function renderTxnList(){
+  const list = inv.txns.slice().sort((a,b)=> b.ts-a.ts).slice(0,40);
+  document.getElementById('invTxnList').innerHTML = list.map(tx=>{
+    const m = findMat(tx.materialId); const unit = m ? m.unit : '';
+    const priceStr = (tx.type==='nhap' && tx.unitPrice) ? ` · ${fmt(tx.unitPrice)} đ/${unit}` : '';
+    return `<div class="txn-row">
+      <div class="t-main">
+        <div class="t-name">${m?escapeHtml(m.name):'(đã xoá)'} <span style="font-size:10px;color:var(--ink-soft);">${tx.type==='nhap'?'Nhập':'Xuất'}</span></div>
+        <div class="t-sub">${isoToDisplay(tx.date)}${priceStr}${tx.note?' · '+escapeHtml(tx.note):''}</div>
+      </div>
+      <div class="t-qty ${tx.type}">${tx.type==='nhap'?'+':'-'}${qfmt(tx.qty)} ${escapeHtml(unit)}</div>
+      <button class="t-del" onclick="removeTxn('${tx.id}')">✕</button>
+    </div>`;
+  }).join('');
+  document.getElementById('invTxnEmpty').style.display = list.length ? 'none' : 'block';
+}
+function renderMatEditList(){
+  document.getElementById('matEditList').innerHTML = inv.materials.map((m,i)=>`
+    <div class="cat-edit-row">
+      <input type="text" value="${escapeHtml(m.name)}" oninput="matDraft(${i},'name',this.value)" placeholder="Tên NVL">
+      <input type="text" class="unit" value="${escapeHtml(m.unit)}" oninput="matDraft(${i},'unit',this.value)" placeholder="Đơn vị">
+      <button onclick="removeMatRow(${i})">✕</button>
+    </div>`).join('');
+}
+function matDraft(i, field, val){ inv.materials[i][field] = val; }
+function addMatRow(){ inv.materials.push({id:newId('m'), name:'NVL mới', unit:'kg'}); renderMatEditList(); }
+function removeMatRow(i){ inv.materials.splice(i,1); renderMatEditList(); }
+function saveMaterials(){
+  inv.materials = inv.materials.map(m=>({ id:m.id, name:(m.name||'').trim()||'NVL', unit:(m.unit||'').trim()||'đv' }));
+  saveInventory(); showToast('Đã lưu danh mục NVL');
+}
+function exportInventory(){
+  const map = invMaterialTotals();
+  if(!inv.materials.length){ showToast('Chưa có NVL nào'); return; }
+  let csv = 'Nguyên vật liệu,Đơn vị,Tồn đầu kỳ,Nhập trong kỳ,Xuất trong kỳ,Tồn cuối kỳ\n';
+  inv.materials.forEach(m=>{
+    const t=map[m.id]; const open=t.bNhap-t.bXuat; const close=open+t.rNhap-t.rXuat;
+    csv += [csvEsc(m.name), csvEsc(m.unit), open, t.rNhap, t.rXuat, close].join(',') + '\n';
+  });
+  downloadCSV('Kho_NXT_'+(fromISO||'all')+'_'+toISOv+'.csv', csv);
+}
+
+/* ============ 3) P&L ============ */
+function pnlNumbers(){
+  const revenue = salesInRange().reduce((s,o)=> s + (o.total||0), 0);
+  const chiEntries = loadThuChiEntries().filter(e=> e.type==='Chi' && inRangeISO(e.date));
+  const chi = chiEntries.reduce((s,e)=> s + (e.amount||0), 0);
+  const byCat = {};
+  chiEntries.forEach(e=>{ byCat[e.category] = (byCat[e.category]||0) + (e.amount||0); });
+  return { revenue, chi, profit: revenue - chi, byCat };
+}
+function renderPnl(){
+  const p = pnlNumbers();
+  document.getElementById('pnlStatRow').innerHTML = `
+    <div class="stat-box"><div class="v pos">${fmt(p.revenue)} đ</div><div class="l">Doanh thu</div></div>
+    <div class="stat-box"><div class="v neg">${fmt(p.chi)} đ</div><div class="l">Chi phí</div></div>
+    <div class="stat-box"><div class="v ${p.profit>=0?'pos':'neg'}">${fmt(p.profit)} đ</div><div class="l">Lãi / Lỗ</div></div>`;
+  const cats = Object.entries(p.byCat).sort((a,b)=> b[1]-a[1]);
+  const max = cats.length ? cats[0][1] : 1;
+  document.getElementById('pnlChiBox').innerHTML = cats.length
+    ? cats.map(([c,v])=>{
+        const pct = p.chi ? Math.round(v/p.chi*100) : 0;
+        return `<div class="bar-row"><div class="b-top"><span>${escapeHtml(c)}</span><span>${fmt(v)} đ (${pct}%)</span></div>
+          <div class="b-track"><div class="b-fill chi" style="width:${Math.max(2, v/max*100)}%;"></div></div></div>`;
+      }).join('')
+    : '<div class="empty-hint">Chưa có khoản chi nào trong khoảng này (ghi ở App Thu Chi).</div>';
+}
+function exportPnl(){
+  const p = pnlNumbers();
+  let csv = 'Chỉ tiêu,Số tiền (đ)\n';
+  csv += ['Doanh thu bán hàng', p.revenue].join(',') + '\n';
+  csv += ['Tổng chi phí', p.chi].join(',') + '\n';
+  csv += ['Lãi/Lỗ', p.profit].join(',') + '\n';
+  csv += '\nChi tiết chi phí,\n';
+  Object.entries(p.byCat).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>{ csv += [csvEsc(c), v].join(',') + '\n'; });
+  downloadCSV('LaiLo_'+(fromISO||'all')+'_'+toISOv+'.csv', csv);
+}
+
+/* ============ 4) TOP SELLING ============ */
+let topSort = 'qty';
+function topAgg(){
+  const agg = {};
+  salesInRange().forEach(o=>{
+    (o.items||[]).forEach(it=>{
+      const key = it.kind==='drink' ? (it.name||'Nước uống') : (it.category ? it.category.replace(/^Thu - /,'') : (it.name||'Món'));
+      if(!agg[key]) agg[key] = {qty:0, rev:0};
+      agg[key].qty += (it.qty||0);
+      agg[key].rev += (it.qty||0)*(it.unitPrice||0);
+    });
+  });
+  return Object.entries(agg).map(([k,v])=>({name:k, qty:v.qty, rev:v.rev}));
+}
+function setTopSort(s){
+  topSort = s;
+  document.getElementById('topSortQty').classList.toggle('active', s==='qty');
+  document.getElementById('topSortRev').classList.toggle('active', s==='rev');
+  renderTop();
+}
+function renderTop(){
+  let arr = topAgg();
+  arr.sort((a,b)=> topSort==='qty' ? (b.qty-a.qty || b.rev-a.rev) : (b.rev-a.rev || b.qty-a.qty));
+  const max = arr.length ? (topSort==='qty'?arr[0].qty:arr[0].rev) : 1;
+  document.getElementById('topBars').innerHTML = arr.length
+    ? arr.slice(0,10).map((m,i)=>{
+        const val = topSort==='qty'?m.qty:m.rev;
+        const label = topSort==='qty' ? (fmt(m.qty)+' phần') : (fmt(m.rev)+' đ');
+        return `<div class="bar-row"><div class="b-top"><span><span class="rank">${i+1}.</span> ${escapeHtml(m.name)}</span><span>${label}</span></div>
+          <div class="b-track"><div class="b-fill" style="width:${Math.max(2, val/max*100)}%;"></div></div></div>`;
+      }).join('')
+    : '<div class="empty-hint">Chưa có món nào được bán trong khoảng này.</div>';
+  document.getElementById('topTable').innerHTML = arr.map((m,i)=>
+    `<tr><td><span class="rank">${i+1}</span></td><td>${escapeHtml(m.name)}</td><td>${fmt(m.qty)}</td><td>${fmt(m.rev)}</td></tr>`
+  ).join('');
+  document.getElementById('topEmpty').style.display = arr.length ? 'none' : 'block';
+}
+function exportTop(){
+  let arr = topAgg();
+  if(!arr.length){ showToast('Không có món nào trong khoảng này'); return; }
+  arr.sort((a,b)=> topSort==='qty' ? (b.qty-a.qty) : (b.rev-a.rev));
+  let csv = 'Hạng,Món,Số lượng bán,Doanh thu (đ)\n';
+  arr.forEach((m,i)=>{ csv += [i+1, csvEsc(m.name), m.qty, m.rev].join(',') + '\n'; });
+  downloadCSV('TopMon_'+(fromISO||'all')+'_'+toISOv+'.csv', csv);
+}
+
+/* ============ AUTH (Admin only) ============ */
+const AUTH_KEY = 'quanAuth_v1';
+const AUTH_ACCOUNTS = { '4817':'admin', '1072':'user' };
+function getAuth(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY)); }catch(e){ return null; } }
+function currentRole(){ const a = getAuth(); return a ? a.role : null; }
+function setAuth(role){ localStorage.setItem(AUTH_KEY, JSON.stringify({role, ts:Date.now()})); }
+function logout(){ localStorage.removeItem(AUTH_KEY); location.reload(); }
+function tryLogin(){
+  const pin = (document.getElementById('authPin').value||'').trim();
+  const role = AUTH_ACCOUNTS[pin];
+  if(!role){ document.getElementById('authErr').textContent='Mật khẩu không đúng'; document.getElementById('authPin').value=''; return; }
+  setAuth(role); applyAuth();
+}
+function applyAuth(){
+  const role = currentRole();
+  const overlay = document.getElementById('authOverlay');
+  const loginBox = document.getElementById('authLoginBox');
+  const blockedBox = document.getElementById('authBlockedBox');
+  if(!role){ overlay.style.display='flex'; loginBox.style.display='block'; blockedBox.style.display='none'; setTimeout(()=>{ const p=document.getElementById('authPin'); if(p) p.focus(); },50); return; }
+  if(role !== 'admin'){ overlay.style.display='flex'; loginBox.style.display='none'; blockedBox.style.display='block'; return; }
+  overlay.style.display='none';
+}
+
+/* ============ INIT ============ */
+setPreset('month');
+goto('sales');
+applyAuth();
+</script>
+</body>
+</html>
