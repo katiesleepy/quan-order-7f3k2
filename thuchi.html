@@ -172,13 +172,39 @@
     max-width:90%; text-align:center;
   }
   .toast.show{ opacity:0.95; }
+
+  .auth-overlay{
+    position:fixed; inset:0; z-index:1000; display:flex;
+    align-items:center; justify-content:center; padding:20px; background:var(--bg);
+  }
+  .auth-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:16px;
+    padding:28px 22px; width:100%; max-width:340px; text-align:center;
+    box-shadow:0 8px 30px rgba(0,0,0,0.12);
+  }
+  .auth-logo{ font-size:44px; line-height:1; }
+  .auth-title{ font-size:20px; font-weight:800; color:var(--terracotta-dark); margin-top:6px; }
+  .auth-sub{ font-size:13px; color:var(--ink-soft); margin:6px 0 16px; line-height:1.5; }
+  .auth-card input{
+    width:100%; padding:13px; border:1px solid var(--line); border-radius:10px;
+    font-size:20px; text-align:center; letter-spacing:4px; background:var(--paper); color:var(--ink);
+  }
+  .auth-err{ color:var(--red); font-size:12.5px; min-height:16px; margin-top:10px; }
+  .top-right{ display:flex; align-items:center; gap:8px; }
+  .logout-btn{
+    background:rgba(255,255,255,0.18); border:none; color:#fff;
+    padding:8px 10px; border-radius:8px; font-size:13px; font-weight:600;
+  }
 </style>
 </head>
 <body>
 
 <header class="topbar">
   <div class="title">📒 Thu Chi Quán</div>
-  <a class="homelink" href="./index.html">🍜 App order</a>
+  <div class="top-right">
+    <a class="homelink" href="./index.html">🍜 App order</a>
+    <button class="logout-btn" id="logoutBtn" onclick="logout()" title="Đăng xuất">🔒 Thoát</button>
+  </div>
 </header>
 
 <main>
@@ -285,6 +311,26 @@
   <button id="navReport" onclick="goto('report')"><span class="ic">📊</span>Báo cáo</button>
   <button id="navSettings" onclick="goto('settings')"><span class="ic">⚙️</span>Cài đặt</button>
 </nav>
+
+<div class="auth-overlay" id="authOverlay" style="display:flex;">
+  <div class="auth-card">
+    <div id="authLoginBox">
+      <div class="auth-logo">📒</div>
+      <div class="auth-title">Thu Chi Quán</div>
+      <div class="auth-sub">Nhập mật khẩu để vào</div>
+      <input type="password" id="authPin" inputmode="numeric" placeholder="Mật khẩu" maxlength="12" onkeydown="if(event.key==='Enter')tryLogin()">
+      <button class="btn" onclick="tryLogin()">Đăng nhập</button>
+      <div class="auth-err" id="authErr"></div>
+    </div>
+    <div id="authBlockedBox" style="display:none;">
+      <div class="auth-logo">🔒</div>
+      <div class="auth-title">Chỉ dành cho Admin</div>
+      <div class="auth-sub">Tài khoản Nhân viên không xem được phần Thu Chi. Vui lòng đăng nhập bằng tài khoản Admin.</div>
+      <button class="btn" onclick="logout()">Đăng nhập tài khoản khác</button>
+      <a class="btn ghost" href="./index.html" style="text-decoration:none;text-align:center;display:block;margin-top:8px;">Về App order</a>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -684,8 +730,33 @@ function resetAllData(){
   }
 }
 
+/* ============ ĐĂNG NHẬP (khóa mềm — chỉ Admin xem được Thu Chi) ============ */
+const AUTH_KEY = 'quanAuth_v1';
+const AUTH_ACCOUNTS = { '4817':'admin', '1072':'user' };
+function getAuth(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY)); }catch(e){ return null; } }
+function currentRole(){ const a = getAuth(); return a ? a.role : null; }
+function setAuth(role){ localStorage.setItem(AUTH_KEY, JSON.stringify({role, ts:Date.now()})); }
+function logout(){ localStorage.removeItem(AUTH_KEY); location.reload(); }
+function tryLogin(){
+  const pin = (document.getElementById('authPin').value||'').trim();
+  const role = AUTH_ACCOUNTS[pin];
+  if(!role){ document.getElementById('authErr').textContent='Mật khẩu không đúng'; document.getElementById('authPin').value=''; return; }
+  setAuth(role);
+  applyAuth();
+}
+function applyAuth(){
+  const role = currentRole();
+  const overlay = document.getElementById('authOverlay');
+  const loginBox = document.getElementById('authLoginBox');
+  const blockedBox = document.getElementById('authBlockedBox');
+  if(!role){ overlay.style.display='flex'; loginBox.style.display='block'; blockedBox.style.display='none'; setTimeout(()=>{ const p=document.getElementById('authPin'); if(p) p.focus(); },50); return; }
+  if(role !== 'admin'){ overlay.style.display='flex'; loginBox.style.display='none'; blockedBox.style.display='block'; return; }
+  overlay.style.display='none';
+}
+
 /* ============ INIT ============ */
 goto('entry');
+applyAuth();
 </script>
 </body>
 </html>
